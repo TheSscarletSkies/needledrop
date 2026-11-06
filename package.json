@@ -1,7 +1,7 @@
 {
   "name": "needledrop",
   "productName": "Needledrop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A 3D turntable music player for your desktop. Plays Spotify, Apple Music, YouTube and local files on a virtual record player.",
   "license": "MIT",
   "type": "module",
