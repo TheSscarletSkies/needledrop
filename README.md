@@ -48,11 +48,45 @@ Every part of the deck either works or is there because a real direct-drive turn
 
 ## Install
 
-Download from [Releases](https://github.com/TheSscarletSkies/needledrop/releases/latest):
+Only download Needledrop from this repository's [Releases page](https://github.com/TheSscarletSkies/needledrop/releases/latest). Copies hosted anywhere else aren't ours.
 
-- **macOS:** the `.dmg` for your Mac (`arm64` for Apple Silicon, the other for Intel). Open it and drag **Needledrop** into Applications. The builds aren't notarized yet, so the first time you open it, right-click the app and choose **Open**. The first time it reads Spotify or Music, macOS asks whether Needledrop may control that app; say yes, or the record won't follow along.
-- **Windows:** `Needledrop-Setup-…-x64.exe` (or `arm64`). It isn't code-signed yet, so SmartScreen may warn you; choose **More info → Run anyway**.
-- **Linux:** the `.deb` for Debian or Ubuntu, or the `.AppImage` for anything else (`chmod +x` it first). For the AppImage, install `playerctl` yourself so Needledrop can see your music player.
+### macOS
+
+1. Download the `.dmg` for your Mac: `Needledrop-…-arm64.dmg` for Apple Silicon (M1 and later), or `Needledrop-….dmg` for Intel.
+2. Open it and drag **Needledrop** into **Applications**.
+3. Open Needledrop. Because the app isn't notarized by Apple yet, macOS says it can't verify the developer. Click **Done**, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Needledrop. You only do this once.
+4. The first time Needledrop reads Spotify or Apple Music, macOS asks whether it may control that app. Click **Allow**, or the record won't follow your music. You can change this later in **System Settings → Privacy & Security → Automation**.
+
+### Windows
+
+1. Download `Needledrop-Setup-…-x64.exe` (or `-arm64.exe` for ARM PCs) and run it.
+2. The installer isn't code-signed yet, so SmartScreen may warn you. Click **More info → Run anyway**.
+
+### Linux
+
+- **Debian / Ubuntu:** `sudo apt install ./needledrop_…_amd64.deb`. This also installs `playerctl`, which Needledrop uses to see what your music player is playing.
+- **Anything else:** download the `.AppImage`, run `chmod +x Needledrop-….AppImage`, and open it. Install `playerctl` from your distribution for music-player sync.
+
+### Check your download (optional)
+
+Each file on the Releases page shows its SHA-256 checksum. Compare it with yours:
+
+```bash
+shasum -a 256 ~/Downloads/Needledrop-0.1.4-arm64.dmg      # macOS / Linux
+```
+
+On Windows, run this in PowerShell:
+
+```powershell
+Get-FileHash .\Needledrop-Setup-0.1.4-x64.exe -Algorithm SHA256
+```
+
+## Using it
+
+- **Your music player:** on the **Spotify · Music** tab (*Now playing* on Windows and Linux), just play something in Spotify or Apple Music. The record follows, and the deck's controls control it.
+- **YouTube:** paste a video or playlist link on the **YouTube** tab.
+- **Your files:** drag songs or a whole folder onto the window, use **Add files** / **Add folder**, or open them with Needledrop from Finder.
+- **Hover anything on the turntable** to see what it does. **Settings** (the gear) has the finishes, the room, what's on the sideboard and the desktop widgets.
 
 ## Run it from source
 
@@ -83,6 +117,7 @@ Pushing a tag like `v0.2.0` builds all three on GitHub Actions and attaches them
 | `Space` | Play / pause |
 | `←` `→` | Seek ±10 s |
 | `↑` `↓` | Volume |
+| `M` | Mute |
 | `N` / `P` | Next / previous |
 
 ## Project layout
@@ -112,19 +147,49 @@ A source is an object with `poll() → { track, position, duration, playing }` p
 
 ## Roadmap ideas
 
-- Code signing and notarization
+- Apple notarization and Windows code signing, so installs don't need the extra click
 - More finishes, picture discs and coloured splatter pressings
 - Album-art thumbnails from the Windows media session
+
+## Privacy
+
+- **No account, no sign-in, no analytics, no tracking.** Settings are stored only on your computer.
+- **The only network requests are:**
+  - YouTube, when you play a YouTube link.
+  - Album artwork:
+    - Spotify's cover-art link for the current song.
+    - A lookup on Apple's public iTunes catalogue for Apple Music and Windows players.
+    - A YouTube thumbnail for YouTube videos.
+- **Nothing is uploaded.** Your files, listening history and settings never leave your machine.
+- **The speakers' audio capture** listens only to Needledrop's own window. Nothing is recorded or sent anywhere. macOS doesn't ask for microphone or screen-recording permission because none is used.
+
+## Troubleshooting
+
+- **The record doesn't follow Spotify / Apple Music (macOS).** Make sure the desktop app is open and playing; Spotify in a web browser isn't supported. If you clicked *Don't Allow* earlier, turn Needledrop back on in **System Settings → Privacy & Security → Automation**.
+- **Nothing happens on Linux.** Install `playerctl`, then check that `playerctl metadata` shows your song in a terminal.
+- **A YouTube video won't play.** Some videos are blocked from playing outside YouTube by their owners. Try another link.
+- **The speakers don't move for Spotify or Apple Music (macOS / Linux).** That's expected: those apps play their own audio, which Needledrop can't hear.
+- **It feels slow.** Turn off the speakers or the video stand under Settings → On the sideboard, or use Compact mode.
+
+## Uninstall
+
+- **macOS:** quit Needledrop, drag it from Applications to the Trash, and optionally delete `~/Library/Application Support/Needledrop` (your settings).
+- **Windows:** *Settings → Apps → Needledrop → Uninstall*.
+- **Linux:** `sudo apt remove needledrop`, or delete the AppImage.
 
 ## Security
 
 Needledrop's windows only ever show its own pages:
-- navigation away is blocked
-- links open in your browser, and only if they're ordinary `https` links
-- every permission is denied (camera, microphone, notifications, location…) except capturing the app's own audio for the speakers
-- the YouTube player is a sandboxed cross-origin iframe with no access to the app
+- Navigation away is blocked.
+- Links open in your browser, and only if they're ordinary `https` links.
+- Every permission is denied (camera, microphone, notifications, location…) except capturing the app's own audio for the speakers.
+- The YouTube player is a cross-origin iframe, so it can't reach the app or its desktop features.
 
-File access through the app is limited to audio files you open and cover-art images. Report security issues privately through GitHub's *Report a vulnerability*.
+Inside the app:
+- **File access:** limited to audio files you open and cover-art images.
+- **Hardening:** every window runs sandboxed, and Electron's riskier switches are turned off (run-as-Node, `NODE_OPTIONS`, `--inspect`). The app only loads its own integrity-checked code.
+
+See [SECURITY.md](SECURITY.md) to report a problem privately.
 
 ## Credits
 

@@ -48,11 +48,12 @@
         }
       ],
       "icon": "build/icon.png",
-      "identity": null,
+      "identity": "-",
       "darkModeSupport": true,
       "extendInfo": {
         "NSAppleEventsUsageDescription": "Needledrop reads what's playing in Spotify and Music so it can spin the record."
-      }
+      },
+      "hardenedRuntime": false
     },
     "dmg": {
       "title": "Needledrop",
@@ -139,7 +140,17 @@
         "role": "Viewer",
         "rank": "Alternate"
       }
-    ]
+    ],
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableCookieEncryption": true,
+      "onlyLoadAppFromAsar": true,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "grantFileProtocolExtraPrivileges": false,
+      "resetAdHocDarwinSignature": true
+    }
   },
   "dependencies": {
     "music-metadata": "^12.3.5"
