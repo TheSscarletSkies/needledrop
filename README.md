@@ -55,7 +55,8 @@ Download from [Releases](https://github.com/TheSscarletSkies/needledrop/releases
 npm install
 npm run dev     # Electron app with hot reload
 npm run web     # browser-only (YouTube + local files; no Spotify/Music bridge)
-npm run dist:mac    # release/*.dmg and *.zip for Apple Silicon and Intel
+npm run dist:mac    # release.noindex/*.dmg and *.zip for Apple Silicon and Intel
+                    # (.noindex keeps Spotlight from listing build copies of the app)
 npm run dist:win    # Windows installer (build on Windows)
 npm run dist:linux  # AppImage and .deb (build on Linux)
 ```
