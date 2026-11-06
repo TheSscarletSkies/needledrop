@@ -96,7 +96,7 @@ function windowCookie() {
 
 export const ROOM_THEMES = {
   dark: { wall: '#3a2a21', windowColor: 0xffd2a3, windowIntensity: 240000 },
-  light: { wall: '#e6dccf', windowColor: 0xffe3c2, windowIntensity: 95000 },
+  light: { wall: '#dcd4c9', windowColor: 0xffe7cc, windowIntensity: 60000 },
 };
 
 export class Room {

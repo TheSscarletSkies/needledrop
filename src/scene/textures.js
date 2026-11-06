@@ -309,8 +309,8 @@ export const FINISHES = {
   walnut: { label: 'Walnut', base: '#4f311d', grain: '#2c190c', metal: '#cfcac2', felt: '#2a2a2a', ink: '#e9e2d6', lacquer: 0.5, roughness: 0.5, theme: 'dark' },
   oak:    { label: 'Light oak', base: '#c39c6c', grain: '#9a7447', metal: '#d8d3cb', felt: '#3a3836', ink: '#2b231c', lacquer: 0.35, roughness: 0.55, theme: 'light' },
   ebony:  { label: 'Matte black', base: '#1b1a19', grain: null, metal: '#8d8a86', felt: '#151515', ink: '#d9d4cc', lacquer: 0, roughness: 0.75, theme: 'dark' },
-  chalk:  { label: 'Chalk white', base: '#ebe6de', grain: null, metal: '#bdb8b0', felt: '#3b3b3b', ink: '#3a3530', lacquer: 0.1, roughness: 0.62, theme: 'light' },
-  blush:  { label: 'Blush', base: '#e2b4aa', grain: null, metal: '#dcc6bc', felt: '#efd9d2', ink: '#6b3f37', lacquer: 0.15, roughness: 0.6, theme: 'light' },
+  chalk:  { label: 'Chalk white', base: '#e5e0d7', grain: null, metal: '#b9b4ac', felt: '#3b3b3b', ink: '#3a3530', lacquer: 0.3, roughness: 0.5, theme: 'light' },
+  blush:  { label: 'Blush', base: '#dcaa9f', grain: null, metal: '#d6c0b6', felt: '#efd9d2', ink: '#6b3f37', lacquer: 0.3, roughness: 0.5, theme: 'light' },
 };
 
 export function makeWoodTexture(finish) {

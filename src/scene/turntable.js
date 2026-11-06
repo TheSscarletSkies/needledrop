@@ -444,14 +444,15 @@ export class Turntable {
 
     // Smoked acrylic (PMMA, ior 1.49): the scene behind is refracted and tinted. Faces are thin;
     // cut edges are looked at "through" the whole sheet, so they read darker and glossier.
-    const smoke = new THREE.Color(0x5d4c42);
+    // Neutral grey smoke: a warm tint turns muddy brown against a bright wall.
+    const smoke = new THREE.Color(0x4a4947);
     const face = new THREE.MeshPhysicalMaterial({
       color: 0xffffff, metalness: 0, roughness: 1, roughnessMap: makeLidSurface(W, D), transmission: 1, thickness: T,
-      ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.55, specularIntensity: 1, envMapIntensity: 1.3,
+      ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.9, specularIntensity: 1, envMapIntensity: 1.5,
     });
     const wallFace = new THREE.MeshPhysicalMaterial({
       color: 0xffffff, metalness: 0, roughness: 0.03, transmission: 1, thickness: T,
-      ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.55, specularIntensity: 1, envMapIntensity: 1.3,
+      ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.9, specularIntensity: 1, envMapIntensity: 1.5,
     });
     const edge = new THREE.MeshPhysicalMaterial({
       color: 0xffffff, metalness: 0, roughness: 0.05, transmission: 1, thickness: 4,

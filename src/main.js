@@ -525,7 +525,7 @@ for (const [name, f] of Object.entries(FINISHES)) {
 // Light rooms get a mid-tone linen and a touch less exposure, so pale finishes and black vinyl keep their contrast.
 const THEMES = {
   dark: { bg: 0x16120f, table: '#2b2521', exposure: 1.0 },
-  light: { bg: 0xd9cdc1, table: '#a8968a', exposure: 0.86 },
+  light: { bg: 0xd2c9bd, table: '#a39a8e', exposure: 0.8 }, // neutral greige, darker than the pale decks
 };
 function setFinish(name) {
   settings.finish = name;

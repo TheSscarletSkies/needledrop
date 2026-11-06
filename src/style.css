@@ -13,7 +13,7 @@
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 body.light {
-  --bg: #d9cdc1;
+  --bg: #d2c9bd;
   --ink: #2a221d;
   --ink-2: rgba(42, 34, 29, 0.64);
   --ink-3: rgba(42, 34, 29, 0.4);
