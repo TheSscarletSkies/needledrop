@@ -356,6 +356,24 @@ export class Turntable {
     button('33', -12.9, 15.1, 2.3, 1.5);
     button('45', -10.2, 15.1, 2.3, 1.5);
 
+    // Engraved, ink-filled legends on the button caps, so you can tell 33 from 45 at a glance.
+    const capLegend = (name, w, d, draw) => {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, d),
+        new THREE.MeshStandardMaterial({ map: makeLegend(w, d, draw, 96), transparent: true, color: 0x26221e, roughness: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+      );
+      m.rotation.x = -Math.PI / 2;
+      m.position.y = 0.28;
+      this.buttons[name].add(m);
+    };
+    capLegend('33', 2.1, 1.3, (ctx, w, h, f) => { ctx.font = `600 ${h * 0.6}px ${f.SANS}`; ctx.fillText('33', w / 2, h * 0.54); });
+    capLegend('45', 2.1, 1.3, (ctx, w, h, f) => { ctx.font = `600 ${h * 0.6}px ${f.SANS}`; ctx.fillText('45', w / 2, h * 0.54); });
+    capLegend('start', 4.3, 1.9, (ctx, w, h, f) => {
+      ctx.font = `600 ${h * 0.3}px ${f.SANS}`;
+      ctx.fillText('START', w / 2, h * 0.36);
+      ctx.fillText('STOP', w / 2, h * 0.72);
+    });
+
     const led = (x, z) => {
       const m = new THREE.MeshStandardMaterial({ color: 0x1a0d05, emissive: 0xff7a1a, emissiveIntensity: 0 });
       this.#mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.08, 16), m).position.set(x, 0.04, z);
@@ -392,6 +410,31 @@ export class Turntable {
     this.lampLight.position.set(lampPos.x + Math.cos(toCenter) * 0.9, 1.05, lampPos.z + Math.sin(toCenter) * 0.9);
     this.lampLight.target.position.set(lampPos.x + Math.cos(toCenter) * 3, 1.2, lampPos.z + Math.sin(toCenter) * 3);
     this.root.add(this.lampLight, this.lampLight.target);
+
+    // Target light: a small pop-up lamp beside the platter that lights the stylus, so you can cue
+    // the needle in a dark room. Its glow sits where the needle meets the record.
+    const tl = new THREE.Vector3(12.6, 0, 13.4);
+    const aim = new THREE.Vector3(7.5, RECORD_TOP, 3.5);
+    const toAim = Math.atan2(aim.z - tl.z, aim.x - tl.x);
+    this.#mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.25, 32), alu).position.set(tl.x, 0.125, tl.z);
+    const stem = this.#mesh(new THREE.CylinderGeometry(0.28, 0.32, 1.9, 16), satin);
+    stem.position.set(tl.x, 1.15, tl.z);
+    const head = new THREE.Group();
+    head.position.set(tl.x, 2.15, tl.z);
+    head.rotation.order = 'YZX';
+    head.rotation.y = -toAim;
+    head.rotation.z = -0.35; // tilted down toward the record
+    this.root.add(head);
+    const tHood = this.#mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.1, 24), black, head);
+    tHood.rotation.z = Math.PI / 2;
+    this.targetLens = new THREE.MeshStandardMaterial({ color: 0x332a1e, emissive: 0xfff0d2, emissiveIntensity: 9 });
+    const tLens = this.#mesh(new THREE.CircleGeometry(0.4, 24), this.targetLens, head, { cast: false });
+    tLens.position.x = 0.56;
+    tLens.rotation.y = Math.PI / 2;
+    this.targetLight = new THREE.SpotLight(0xffecc8, 2600, 30, 0.3, 0.7, 2);
+    this.targetLight.position.set(tl.x + Math.cos(toAim) * 0.6, 2.0, tl.z + Math.sin(toAim) * 0.6);
+    this.targetLight.target.position.copy(aim);
+    this.root.add(this.targetLight, this.targetLight.target);
 
     // Pitch slider ±8 %, with a quartz-lock light that only shows at exactly 0.
     const slot = this.#mesh(new RoundedBoxGeometry(0.7, 0.12, PITCH_Z.travel * 2 + 1.6, 2, 0.05), this.mat.rubber);

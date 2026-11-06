@@ -81,7 +81,7 @@ export class Widgets {
       skipTaskbar: true, show: false,
       ...(k.resizable ? { minWidth: k.min[0], minHeight: k.min[1], maxWidth: k.max[0], maxHeight: k.max[1] } : {}),
       ...look,
-      webPreferences: { preload: this.preload, contextIsolation: true, nodeIntegration: false },
+      webPreferences: { preload: this.preload, contextIsolation: true, nodeIntegration: false, sandbox: true },
     });
     win.widgetKind = kind;
     if (k.resizable) {

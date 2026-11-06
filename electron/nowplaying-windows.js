@@ -1,9 +1,9 @@
 // Windows: the system media session (what the volume flyout shows) via WinRT, from a long-lived
 // PowerShell process so each poll doesn't pay PowerShell's start-up cost.
 // Protocol: we write one command per line on stdin; it answers one line on stdout.
+import { app } from 'electron';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 const SEP = '␟';
@@ -68,7 +68,8 @@ const waiting = [];
 let broken = false;
 
 function start() {
-  const file = path.join(os.tmpdir(), 'needledrop-media.ps1');
+  // In Needledrop's own app-data folder, not a shared temp dir another program could write to.
+  const file = path.join(app.getPath('userData'), 'media-session.ps1');
   fs.writeFileSync(file, `﻿${SCRIPT}`, 'utf8');
   proc = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', file], { windowsHide: true });
   proc.stdout.setEncoding('utf8');

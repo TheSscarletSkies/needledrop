@@ -60,6 +60,34 @@ app.on('second-instance', (_e, argv) => {
 });
 
 const PRELOAD = path.join(__dirname, 'preload.cjs');
+
+// ---- security ----------------------------------------------------------------------------------
+// Needledrop windows only ever show Needledrop's own pages. The YouTube player is a cross-origin iframe
+// and never gets the preload API; these rules make sure nothing can swap the page out from under it.
+const isOwnUrl = (url) => {
+  try { return !!baseUrl && new URL(url).origin === new URL(baseUrl).origin; } catch { return false; }
+};
+app.on('web-contents-created', (_e, contents) => {
+  const block = (e, url) => { if (!isOwnUrl(url)) e.preventDefault(); };
+  contents.on('will-navigate', block);
+  contents.on('will-redirect', block);
+  contents.on('will-attach-webview', (e) => e.preventDefault());
+  // Links that try to open a window go to the browser, and only if they're ordinary web links.
+  contents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+});
+// Deny every permission (camera, mic, notifications, location…) except what our own pages need:
+// capture of the app's own audio for the speakers, and full screen. No microphone or camera.
+const ALLOWED = new Set(['display-capture', 'fullscreen']);
+function lockDownPermissions() {
+  const s = session.defaultSession;
+  s.setPermissionRequestHandler((wc, permission, callback, details) => {
+    callback(ALLOWED.has(permission) && details?.isMainFrame !== false && isOwnUrl(details?.requestingUrl || wc.getURL()));
+  });
+  s.setPermissionCheckHandler((_wc, permission, origin, details) => ALLOWED.has(permission) && details?.isMainFrame !== false && isOwnUrl(origin));
+}
 const widgets = new Widgets({
   preload: PRELOAD,
   getBaseUrl: () => baseUrl,
@@ -85,11 +113,10 @@ async function createWindow() {
       preload: PRELOAD,
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
   });
   win.once('ready-to-show', () => win.show());
-  // External links open in the real browser.
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
 
   // Widgets mirror the main window's playback, so they go away with it (and come back with it).
   win.on('closed', () => { win = null; winReady = false; widgets.closeAll(); });
@@ -106,7 +133,8 @@ async function createWindow() {
 // On Windows, system loopback is available, so the speakers also hear Spotify and anything else.
 function allowOwnAudioCapture() {
   session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
-    if (!request.frame) return callback(null);
+    // Only Needledrop's own top-level page may capture, and only itself.
+    if (!request.frame || request.frame.parent || !isOwnUrl(request.frame.url)) return callback(null);
     callback({
       video: request.frame,
       audio: process.platform === 'win32' ? 'loopback' : request.frame,
@@ -164,16 +192,19 @@ export async function fetchAsDataUrl(url) {
   if (imgCache.has(url)) return imgCache.get(url);
   try {
     if (url.startsWith('file://')) {
-      // Linux players (MPRIS) often hand out cover art as local files.
+      // Linux players (MPRIS) often hand out cover art as local files. Images only.
       const file = fileURLToPath(url);
       const ext = path.extname(file).slice(1).toLowerCase();
+      if (!['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext)) return null;
       const data = `data:image/${ext === 'jpg' ? 'jpeg' : ext || 'jpeg'};base64,${fs.readFileSync(file).toString('base64')}`;
       imgCache.set(url, data);
       return data;
     }
+    if (!/^https?:\/\//i.test(url)) return null;
     const res = await fetch(url);
     if (!res.ok) return null;
     const type = res.headers.get('content-type') || 'image/jpeg';
+    if (!type.startsWith('image/')) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     const data = `data:${type};base64,${buf.toString('base64')}`;
     imgCache.set(url, data);
@@ -192,7 +223,7 @@ app.setAboutPanelOptions({
   credits: 'A 3D turntable for Spotify, Apple Music, YouTube and your own files.',
 });
 
-app.whenReady().then(() => { allowOwnAudioCapture(); createWindow(); });
+app.whenReady().then(() => { lockDownPermissions(); allowOwnAudioCapture(); createWindow(); });
 app.on('before-quit', () => widgets.closeAll());
 // Mac convention: closing the window keeps the app in the Dock; clicking the Dock icon brings it back.
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

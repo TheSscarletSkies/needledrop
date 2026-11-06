@@ -145,7 +145,18 @@ body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
 body.empty .transport { opacity: 0.45; }
 .volume { display: flex; align-items: center; gap: 6px; margin-left: 4px; color: var(--ink-3); }
 .volume input { width: 72px; accent-color: var(--ink-2); }
+.mute { display: grid; place-items: center; width: 26px; height: 26px; border: 0; padding: 0; border-radius: 50%; background: none; color: var(--ink-3); }
+.mute:hover { color: var(--ink); background: var(--line); }
+body.muted .mute { color: var(--accent); }
 body.src-system .volume { display: none; } /* Spotify and Music have their own volume */
+
+/* ---- hover labels for the deck's controls ---- */
+.tip {
+  position: fixed; left: 0; top: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 0.15s;
+  padding: 5px 9px; border-radius: 7px; font-size: 12px; white-space: nowrap;
+  background: var(--glass); backdrop-filter: blur(16px); border: 1px solid var(--line); color: var(--ink);
+}
+.tip.on { opacity: 1; }
 
 /* ---- coach mark ---- */
 .coach {

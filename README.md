@@ -15,7 +15,8 @@ Every part of the deck either works or is there because a real direct-drive turn
   - It moves inward as the track plays.
   - Drag it anywhere on the record to seek.
 - **Cue lever:** a real lever and platform. Clicking it raises the platform under the arm tube and lifts the needle.
-- **Start/stop, 33 and 45:** the buttons press down, and the speed LEDs light up.
+- **Start/stop, 33 and 45:** labelled caps that press down, with speed LEDs. Hover any control on the deck to see what it does.
+- **Target light:** a pop-up lamp beside the platter lights the needle, so you can cue in a dark room.
 - **Pitch slider (±8 %):** it changes the platter speed and the playback rate of local files and YouTube. A green quartz-lock light glows only at exactly 0.
 - **Strobe lamp and dots:** the lamp lights the strobe dots on the platter rim. Their apparent drift is computed from the real speed: at exactly 33⅓ the 33 row stands still, and the 45 row drifts.
 - **Dust cover:** one moulded smoked-acrylic shell that refracts and tints what's behind it, on friction hinges, with rubber bumpers and a thumbprint where you'd lift it. Click it to open or close.
@@ -112,6 +113,16 @@ A source is an object with `poll() → { track, position, duration, playing }` p
 - Code signing and notarization
 - More finishes, picture discs and coloured splatter pressings
 - Album-art thumbnails from the Windows media session
+
+## Security
+
+Needledrop's windows only ever show its own pages:
+- navigation away is blocked
+- links open in your browser, and only if they're ordinary `https` links
+- every permission is denied (camera, microphone, notifications, location…) except capturing the app's own audio for the speakers
+- the YouTube player is a sandboxed cross-origin iframe with no access to the app
+
+File access through the app is limited to audio files you open and cover-art images. Report security issues privately through GitHub's *Report a vulnerability*.
 
 ## Credits
 

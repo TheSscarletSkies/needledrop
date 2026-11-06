@@ -345,6 +345,7 @@ addEventListener('keydown', (e) => {
   if (e.key === 'p') source.prev();
   if (e.key === 'Escape') { panelOpen = false; $('#settings').hidden = true; renderPanels(); }
   if (e.code === 'ArrowUp') { e.preventDefault(); setVolume(settings.volume + 0.05); }
+  if (e.key === 'm') toggleMute();
   if (e.code === 'ArrowDown') { e.preventDefault(); setVolume(settings.volume - 0.05); }
 });
 
@@ -356,8 +357,15 @@ addEventListener('pointerdown', (e) => {
 });
 
 // ---------- volume (YouTube and local files; Spotify/Music keep their own) ----------
+let unmuteTo = null; // volume to restore when un-muting
 function setVolume(v) {
   settings.volume = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
+  if (settings.volume > 0) unmuteTo = null;
+  document.body.classList.toggle('muted', settings.volume === 0);
+  $('#mute-icon').setAttribute('d', settings.volume === 0
+    ? 'M4 9v6h4l5 4V5L8 9H4zm12.6 3 2.2-2.2-1.1-1.1-2.2 2.2-2.2-2.2-1.1 1.1 2.2 2.2-2.2 2.2 1.1 1.1 2.2-2.2 2.2 2.2 1.1-1.1z'
+    : 'M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z');
+  $('#mute').setAttribute('aria-label', settings.volume === 0 ? 'Unmute' : 'Mute');
   save();
   sources.local.setVolume(settings.volume);
   sources.youtube.setVolume(settings.volume);
@@ -365,6 +373,11 @@ function setVolume(v) {
   $('#volume').value = settings.volume;
 }
 $('#volume').addEventListener('input', (e) => setVolume(+e.target.value));
+function toggleMute() {
+  if (settings.volume > 0) { const was = settings.volume; setVolume(0); unmuteTo = was; }
+  else setVolume(unmuteTo || 0.7);
+}
+$('#mute').addEventListener('click', toggleMute);
 
 // ---------- system now-playing: media keys, Control Center, lock screen ----------
 // Only for what Needledrop itself plays; Spotify and Music report their own.
@@ -445,6 +458,7 @@ addEventListener('pointerdown', (e) => {
     case 'sleeve': panelOpen = true; $('#settings').hidden = true; renderPanels(); break;
   }
   canvas.className = drag ? 'grabbing' : '';
+  showTip(null);
 }, { capture: true });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -454,7 +468,29 @@ canvas.addEventListener('pointermove', (e) => {
   if (drag === 'pitch') { if (ray.ray.intersectPlane(pitchPlane, p)) setPitch(deck.pitchFromPoint(p)); return; }
   const hit = deck.pick(ray);
   canvas.className = hit === 'arm' || hit === 'pitch' ? 'grab' : hit ? 'pointer' : '';
+  showTip(hit, e);
 });
+canvas.addEventListener('pointerleave', () => showTip(null));
+
+// What each part of the deck does, on hover.
+const TIPS = {
+  arm: 'Tonearm: drag onto the record to play or seek',
+  start: 'Start / stop',
+  '33': '33⅓ RPM',
+  '45': '45 RPM',
+  cue: 'Cue lever: lift or lower the needle',
+  pitch: 'Pitch ±8%: drag to change speed',
+  cover: 'Dust cover: click to open or close',
+  sleeve: 'Album sleeve: change the record',
+};
+const tip = $('#tip');
+function showTip(hit, e) {
+  const text = !drag && TIPS[hit];
+  tip.classList.toggle('on', !!text);
+  if (!text) return;
+  tip.textContent = text;
+  tip.style.transform = `translate(${Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8)}px, ${e.clientY + 18}px)`;
+}
 
 canvas.addEventListener('dblclick', (e) => {
   setPointer(e);
