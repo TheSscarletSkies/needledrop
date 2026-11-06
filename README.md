@@ -28,6 +28,8 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
 - **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Light finishes switch to a daylight room.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.
+- **Opens your audio files:** double-click an MP3, M4A, FLAC, WAV, OGG, AIFF or Opus file, use *Open With*, or drop files on the Dock icon, and it goes straight onto the platter. To make Needledrop the default for a file type on macOS, select a file in Finder, choose **File → Get Info → Open with → Needledrop**, then **Change All…**.
+- **Volume and media keys:** a volume slider for YouTube and local files (or ↑ ↓), and your keyboard's play/next keys plus Control Center work for what Needledrop is playing.
 - **Your sideboard, your call:** turn the speakers, the video stand and the album sleeve on or off in Settings → On the sideboard.
 - **Desktop:** keep-on-top and a compact mode.
 
@@ -77,6 +79,7 @@ Pushing a tag like `v0.2.0` builds all three on GitHub Actions and attaches them
 | Drag empty space | Orbit the camera; scroll to zoom |
 | `Space` | Play / pause |
 | `←` `→` | Seek ±10 s |
+| `↑` `↓` | Volume |
 | `N` / `P` | Next / previous |
 
 ## Project layout

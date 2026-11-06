@@ -46,7 +46,7 @@ export class YouTubeSource {
         this.player = new YT.Player(this.host, {
           width: 640, height: 360,
           playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, rel: 0 },
-          events: { onReady: resolve, onError: (e) => { this.note = `YouTube couldn't play this (error ${e.data}). Some videos block embedding.`; } },
+          events: { onReady: () => { if (this.volume !== undefined) this.player.setVolume(Math.round(this.volume * 100)); resolve(); }, onError: (e) => { this.note = `YouTube couldn't play this (error ${e.data}). Some videos block embedding.`; } },
         });
       });
     }
@@ -87,7 +87,7 @@ export class YouTubeSource {
     if ((this.player?.getCurrentTime() || 0) > 4) this.seek(0);
     else this.player?.previousVideo();
   }
-  setVolume(v) { this.player?.setVolume(Math.round(v * 100)); }
+  setVolume(v) { this.volume = v; this.player?.setVolume?.(Math.round(v * 100)); }
   // YouTube snaps to its nearest supported rate.
   setRate(r) { this.rate = r; this.player?.setPlaybackRate?.(r); }
 }

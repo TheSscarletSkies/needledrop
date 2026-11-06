@@ -34,6 +34,31 @@ function serveDist() {
 }
 
 let baseUrl;
+let winReady = false;
+
+// Audio files opened with Needledrop: double-click / Open With / dropped on the Dock (macOS 'open-file'),
+// or passed on the command line (Windows, Linux). They're queued until the window can take them.
+const AUDIO_EXT = /\.(mp3|m4a|aac|flac|wav|ogg|opus|aiff?)$/i;
+let pendingFiles = process.platform === 'darwin' ? [] : process.argv.slice(1).filter((a) => AUDIO_EXT.test(a));
+function openFiles(paths) {
+  const files = paths.filter((p) => AUDIO_EXT.test(p));
+  if (!files.length) return;
+  if (win && winReady) {
+    win.webContents.send('files:open', files);
+    win.show();
+    win.focus();
+  } else {
+    pendingFiles.push(...files);
+    if (app.isReady() && !win) createWindow();
+  }
+}
+app.on('open-file', (e, file) => { e.preventDefault(); openFiles([file]); });
+if (!app.requestSingleInstanceLock()) app.quit();
+app.on('second-instance', (_e, argv) => {
+  openFiles(argv.slice(1));
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+});
+
 const PRELOAD = path.join(__dirname, 'preload.cjs');
 const widgets = new Widgets({
   preload: PRELOAD,
@@ -67,9 +92,11 @@ async function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
 
   // Widgets mirror the main window's playback, so they go away with it (and come back with it).
-  win.on('closed', () => { win = null; widgets.closeAll(); });
+  win.on('closed', () => { win = null; winReady = false; widgets.closeAll(); });
   baseUrl ||= process.env.VITE_DEV_SERVER_URL || (await serveDist());
   await win.loadURL(baseUrl);
+  winReady = true;
+  if (pendingFiles.length) { win.webContents.send('files:open', pendingFiles); pendingFiles = []; }
   widgets.quitting = false;
   widgets.set(widgets.getPrefs());
 }
@@ -95,6 +122,8 @@ ipcMain.handle('np:state', () => nowPlaying.getState());
 ipcMain.handle('np:command', (_e, cmd, arg) => nowPlaying.command(cmd, arg));
 
 ipcMain.handle('img:fetch', async (_e, url) => fetchAsDataUrl(url));
+
+ipcMain.handle('files:read', (_e, filePath) => (AUDIO_EXT.test(filePath) ? fs.promises.readFile(filePath) : null));
 
 ipcMain.handle('files:meta', async (_e, filePath) => {
   const { parseFile } = await import('music-metadata');

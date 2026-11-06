@@ -33,7 +33,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85 },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -178,7 +178,7 @@ function wake() {
   if (window.needledrop) levels.startFromWindow();
   else levels.startFromElement(sources.local.audio);
 }
-vinyl.setLevel(settings.crackle);
+vinyl.setLevel(settings.crackle * settings.volume);
 const sources = {
   system: new SystemSource(),
   youtube: new YouTubeSource($('#yt-host')),
@@ -261,6 +261,7 @@ async function pressRecord(track, animate = true) {
     : new THREE.Color(0x0c0c0c);
   deck.setRecord({ img, vinyl: color, track }, animate);
   widgetLook.vinyl = `#${color.getHexString()}`;
+  updateMediaSession(track);
 }
 
 function switchSource(name, { open = true } = {}) {
@@ -271,6 +272,8 @@ function switchSource(name, { open = true } = {}) {
   save();
   pendingPlay = false;
   panelOpen = open;
+  document.body.classList.remove('src-system', 'src-youtube', 'src-local');
+  document.body.classList.add(`src-${name}`);
   $('#settings').hidden = true;
   Object.assign(snap, { track: null, position: 0, duration: 0, playing: false });
   currentTrackId = undefined;
@@ -341,7 +344,49 @@ addEventListener('keydown', (e) => {
   if (e.key === 'n') source.next();
   if (e.key === 'p') source.prev();
   if (e.key === 'Escape') { panelOpen = false; $('#settings').hidden = true; renderPanels(); }
+  if (e.code === 'ArrowUp') { e.preventDefault(); setVolume(settings.volume + 0.05); }
+  if (e.code === 'ArrowDown') { e.preventDefault(); setVolume(settings.volume - 0.05); }
 });
+
+// Clicking anywhere outside Settings (or an open source panel) closes it.
+addEventListener('pointerdown', (e) => {
+  const t = e.target;
+  if (!$('#settings').hidden && !t.closest?.('#settings, #settings-btn')) { $('#settings').hidden = true; renderPanels(); }
+  if (panelOpen && snap.track && t !== canvas && !t.closest?.('.panel, .sources')) { panelOpen = false; renderPanels(); }
+});
+
+// ---------- volume (YouTube and local files; Spotify/Music keep their own) ----------
+function setVolume(v) {
+  settings.volume = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
+  save();
+  sources.local.setVolume(settings.volume);
+  sources.youtube.setVolume(settings.volume);
+  vinyl.setLevel(settings.crackle * settings.volume); // surface noise is part of the record, so it follows the volume
+  $('#volume').value = settings.volume;
+}
+$('#volume').addEventListener('input', (e) => setVolume(+e.target.value));
+
+// ---------- system now-playing: media keys, Control Center, lock screen ----------
+// Only for what Needledrop itself plays; Spotify and Music report their own.
+const mediaSession = navigator.mediaSession;
+function updateMediaSession(track) {
+  if (!mediaSession) return;
+  if (!track || source === sources.system) { mediaSession.metadata = null; return; }
+  mediaSession.metadata = new MediaMetadata({
+    title: track.title || '', artist: track.artist || '', album: track.albumName || '',
+    artwork: widgetLook.art ? [{ src: widgetLook.art, sizes: '512x512', type: 'image/jpeg' }] : [],
+  });
+}
+if (mediaSession) {
+  const on = (action, fn) => { try { mediaSession.setActionHandler(action, fn); } catch { /* unsupported action */ } };
+  on('play', () => { deck.press('start'); play(); });
+  on('pause', () => { deck.press('start'); pause(); });
+  on('nexttrack', () => source.next());
+  on('previoustrack', () => source.prev());
+  on('seekto', (d) => seekTo(d.seekTime));
+  on('seekforward', () => seekTo(position() + 10));
+  on('seekbackward', () => seekTo(position() - 10));
+}
 
 function applySpeed() {
   deck.setSpeed(settings.rpm);
@@ -559,7 +604,7 @@ $('#sleeve').checked = settings.sleeve;
 setSleeve(settings.sleeve);
 $('#sleeve').addEventListener('change', (e) => { settings.sleeve = e.target.checked; setSleeve(e.target.checked); save(); });
 $('#crackle').value = settings.crackle;
-$('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle); save(); });
+$('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle * settings.volume); save(); });
 $('#pin').addEventListener('change', (e) => window.needledrop?.pin(e.target.checked));
 $('#compact').addEventListener('change', (e) => {
   document.body.classList.toggle('compact', e.target.checked);
@@ -584,6 +629,17 @@ if (bridge?.getWidgets) {
     if (cmd === 'pitch') setPitch(arg);
   });
 }
+// Audio files opened with Needledrop (double-click, Open With, dropped on the Dock icon).
+bridge?.onOpenFiles?.(async (paths) => {
+  const first = await sources.local.addPaths(paths);
+  if (first < 0) return;
+  if (source !== sources.local) switchSource('local', { open: false });
+  sources.local.jump(first);
+  polling = false;
+  await poll();
+  play();
+});
+
 let sentArt;
 function broadcastToWidgets(progress, wantsPlay, mode) {
   if (!bridge?.broadcast) return;
@@ -602,6 +658,7 @@ function broadcastToWidgets(progress, wantsPlay, mode) {
 
 setFinish(settings.finish);
 setVinylMode(settings.vinyl);
+setVolume(settings.volume);
 switchSource(source.name, { open: false });
 pressRecord(null, false);
 if (settings.ytUrl && source === sources.youtube) sources.youtube.load(settings.ytUrl);
@@ -638,6 +695,12 @@ function frame(fixedDt) {
     if (!snap.track) $('#t-sub').textContent = source.note || '';
     renderPanels();
     broadcastToWidgets(progress, wantsPlay, mode);
+    if (mediaSession && source !== sources.system && snap.track) {
+      mediaSession.playbackState = wantsPlay ? 'playing' : 'paused';
+      if (snap.duration > 0) {
+        try { mediaSession.setPositionState({ duration: snap.duration, position: Math.min(pos, snap.duration), playbackRate: speedFactor() }); } catch { /* ignore */ }
+      }
+    }
   }
   placeCoach();
 
@@ -654,10 +717,21 @@ function frame(fixedDt) {
   scene.fog.near = camDist + 45;
   scene.fog.far = camDist + 230;
   dof.uniforms.focus.value = camDist;
+
+  // Nothing moving (paused, arm settled, camera still)? Drop to ~4 fps to save battery.
+  const sig = [deck.theta, deck.lift, deck.spin, deck.coverT, deck.recordDrop, deck.pressed.size, stand.t, levels.bass,
+    camera.position.x, camera.position.y, camera.position.z, settings.pitch, settings.rpm].map((v) => v.toFixed(4)).join();
+  const active = fixedDt !== undefined || sig !== lastSig || viewTween || drag;
+  lastSig = sig;
+  idleFrames = active ? 0 : idleFrames + 1;
+  if (idleFrames > 3 && idleFrames % 15 !== 0) return;
+
   composer.render(dt);
   cssRenderer.render(scene, camera);
   if (stand.group.visible) cutVideoHole();
 }
+let lastSig = '';
+let idleFrames = 0;
 
 // The video iframe sits *behind* the WebGL canvas. After the frame is drawn, re-draw the scene's depth
 // and then the tablet's glass with a fully transparent colour, depth-tested: the canvas turns
