@@ -1,12 +1,14 @@
 // Needledrop — Electron main process.
 // Serves the built renderer over http://127.0.0.1 (YouTube embeds refuse file:// origins),
-// and exposes a small IPC surface: now-playing for Spotify/Music, file metadata, image fetching.
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+// and exposes a small IPC surface: now-playing from the OS media player, file metadata, image fetching,
+// desktop widgets, and capture of the window's own audio so the speakers can move with the music.
+import { app, BrowserWindow, ipcMain, session, shell } from 'electron';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as nowPlaying from './nowplaying.js';
+import { Widgets } from './widgets.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
@@ -32,19 +34,30 @@ function serveDist() {
 }
 
 let baseUrl;
+const PRELOAD = path.join(__dirname, 'preload.cjs');
+const widgets = new Widgets({
+  preload: PRELOAD,
+  getBaseUrl: () => baseUrl,
+  onClosed: (kind) => win?.webContents.send('widgets:closed', kind),
+});
+
+// macOS gets the inset traffic lights over the scene; Windows and Linux keep their native title bar.
+const chrome = process.platform === 'darwin'
+  ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 18 } }
+  : { autoHideMenuBar: true };
+
 async function createWindow() {
   win = new BrowserWindow({
     width: 1080,
     height: 760,
     minWidth: 420,
     minHeight: 360,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 18 },
+    ...chrome,
     backgroundColor: '#16120f',
     title: 'Needledrop',
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: PRELOAD,
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -53,9 +66,26 @@ async function createWindow() {
   // External links open in the real browser.
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
 
-  win.on('closed', () => { win = null; });
+  // Widgets mirror the main window's playback, so they go away with it (and come back with it).
+  win.on('closed', () => { win = null; widgets.closeAll(); });
   baseUrl ||= process.env.VITE_DEV_SERVER_URL || (await serveDist());
-  win.loadURL(baseUrl);
+  await win.loadURL(baseUrl);
+  widgets.quitting = false;
+  widgets.set(widgets.getPrefs());
+}
+
+// The speakers listen to this window's own audio (YouTube and local files). getDisplayMedia is
+// answered with the page itself, so no screen is shared and no screen-recording permission is needed.
+// On Windows, system loopback is available, so the speakers also hear Spotify and anything else.
+function allowOwnAudioCapture() {
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    if (!request.frame) return callback(null);
+    callback({
+      video: request.frame,
+      audio: process.platform === 'win32' ? 'loopback' : request.frame,
+      enableLocalEcho: true,
+    });
+  });
 }
 
 // ---- IPC ----------------------------------------------------------------
@@ -83,6 +113,14 @@ ipcMain.handle('files:meta', async (_e, filePath) => {
   }
 });
 
+ipcMain.handle('widgets:get', () => widgets.getPrefs());
+ipcMain.handle('widgets:set', (_e, prefs) => widgets.set(prefs));
+ipcMain.on('widgets:state', (_e, state) => widgets.broadcast(state));
+ipcMain.on('widget:command', (_e, cmd) => {
+  if (cmd === 'open') { if (win) { win.show(); win.focus(); } else createWindow(); return; }
+  win?.webContents.send('remote:command', cmd);
+});
+
 ipcMain.handle('win:pin', (_e, on) => { if (!win) return false; win.setAlwaysOnTop(!!on, 'floating'); return win.isAlwaysOnTop(); });
 ipcMain.handle('win:compact', (_e, on) => {
   if (!win) return;
@@ -94,6 +132,14 @@ export async function fetchAsDataUrl(url) {
   if (!url) return null;
   if (imgCache.has(url)) return imgCache.get(url);
   try {
+    if (url.startsWith('file://')) {
+      // Linux players (MPRIS) often hand out cover art as local files.
+      const file = fileURLToPath(url);
+      const ext = path.extname(file).slice(1).toLowerCase();
+      const data = `data:image/${ext === 'jpg' ? 'jpeg' : ext || 'jpeg'};base64,${fs.readFileSync(file).toString('base64')}`;
+      imgCache.set(url, data);
+      return data;
+    }
     const res = await fetch(url);
     if (!res.ok) return null;
     const type = res.headers.get('content-type') || 'image/jpeg';
@@ -115,7 +161,8 @@ app.setAboutPanelOptions({
   credits: 'A 3D turntable for Spotify, Apple Music, YouTube and your own files.',
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => { allowOwnAudioCapture(); createWindow(); });
+app.on('before-quit', () => widgets.closeAll());
 // Mac convention: closing the window keeps the app in the Dock; clicking the Dock icon brings it back.
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (!win) createWindow(); });

@@ -11,7 +11,10 @@
     "web": "vite",
     "build": "vite build",
     "start": "vite build && electron .",
-    "dist": "vite build && electron-builder --mac"
+    "dist": "vite build && electron-builder --mac",
+    "dist:mac": "vite build && electron-builder --mac",
+    "dist:win": "vite build && electron-builder --win",
+    "dist:linux": "vite build && electron-builder --linux"
   },
   "build": {
     "appId": "app.needledrop",
@@ -70,6 +73,54 @@
           "path": "/Applications"
         }
       ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Needledrop-Setup-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Audio",
+      "icon": "build/icon.png",
+      "maintainer": "TheSscarletSkies <TheSscarletSkies@users.noreply.github.com>",
+      "synopsis": "A 3D turntable music player"
+    },
+    "deb": {
+      "depends": [
+        "playerctl"
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "TheSscarletSkies",
+      "repo": "needledrop",
+      "releaseType": "draft"
     }
   },
   "dependencies": {
@@ -84,5 +135,10 @@
     "wait-on": "^9.5.1",
     "three": "^0.187.0"
   },
-  "author": "Mariyam Ahmed"
+  "author": "Mariyam Ahmed",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSscarletSkies/needledrop.git"
+  },
+  "homepage": "https://github.com/TheSscarletSkies/needledrop"
 }

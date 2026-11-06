@@ -18,9 +18,12 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Start/stop, 33 and 45:** the buttons press down, and the speed LEDs light up.
 - **Pitch slider (±8 %):** it changes the platter speed and the playback rate of local files and YouTube. A green quartz-lock light glows only at exactly 0.
 - **Strobe lamp and dots:** the lamp lights the strobe dots on the platter rim. Their apparent drift is computed from the real speed: at exactly 33⅓ the 33 row stands still, and the 45 row drifts.
-- **Hinged dust cover:** smoked acrylic on friction hinges. Click it to open or close.
+- **Dust cover:** one moulded smoked-acrylic shell that refracts and tints what's behind it, on friction hinges, with rubber bumpers and a thumbprint where you'd lift it. Click it to open or close.
+- **Speakers that move with the music:** walnut bookshelf speakers whose woofer cones and tweeter domes respond to what's actually playing. They hear YouTube and local files on every platform, and everything on Windows. On macOS and Linux, Spotify and other players run in their own apps, which Needledrop can't hear, so the speakers stay still rather than fake it.
+- **Video on a stand:** YouTube video plays on a tablet in a walnut stand beside the deck, and it's properly hidden when the deck passes in front of it.
+- **Desktop widgets:** a spinning-record square and a now-playing strip, in native frosted glass tinted from the album art. They float on top or sit with your other windows; click to play or pause, double-click to open Needledrop.
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
-- **Room:** a linen-covered sideboard, a window key light and ambient occlusion for contact shadows. Bloom affects only the LEDs. Light finishes switch to a daylight room.
+- **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Light finishes switch to a daylight room.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.
 - **Desktop:** keep-on-top and a compact mode.
 
@@ -28,15 +31,19 @@ Every part of the deck either works or is there because a real direct-drive turn
 
 | Source | How it works | Setup |
 |---|---|---|
-| **Spotify / Apple Music** (macOS) | Reads and controls the desktop apps over AppleScript: track, position, artwork, play/pause/seek/skip. | None. macOS asks once for permission to control the app. |
+| **Now playing: macOS** | Spotify and Apple Music, read and controlled over AppleScript: track, position, artwork, play/pause/seek/skip. | None. macOS asks once for permission to control each app. |
+| **Now playing: Windows** | The system media session, the same one the volume flyout shows, so Spotify, browsers and most players. Read through WinRT. | None |
+| **Now playing: Linux** | Any MPRIS player, such as Spotify, Rhythmbox or VLC, via `playerctl`. | `playerctl` (the `.deb` installs it) |
 | **YouTube** | Official IFrame Player API. Paste a video or playlist link. *Show video* reveals the player. | None |
 | **Local files** | Drag audio files onto the window or use *Add files*. Tags and embedded artwork are read with `music-metadata`. | None |
 
-## Install (macOS)
+## Install
 
-Download the `.dmg` for your Mac from Releases (`arm64` for Apple Silicon, the other one for Intel), open it, and drag **Needledrop** into Applications.
+Download from [Releases](https://github.com/TheSscarletSkies/needledrop/releases/latest):
 
-The builds aren't notarized yet, so the first time you open it, right-click the app and choose **Open**. The first time it reads Spotify or Music, macOS asks whether Needledrop may control that app. Say yes, or the record won't follow along.
+- **macOS:** the `.dmg` for your Mac (`arm64` for Apple Silicon, the other for Intel). Open it and drag **Needledrop** into Applications. The builds aren't notarized yet, so the first time you open it, right-click the app and choose **Open**. The first time it reads Spotify or Music, macOS asks whether Needledrop may control that app; say yes, or the record won't follow along.
+- **Windows:** `Needledrop-Setup-…-x64.exe` (or `arm64`). It isn't code-signed yet, so SmartScreen may warn you; choose **More info → Run anyway**.
+- **Linux:** the `.deb` for Debian or Ubuntu, or the `.AppImage` for anything else (`chmod +x` it first). For the AppImage, install `playerctl` yourself so Needledrop can see your music player.
 
 ## Run it from source
 
@@ -44,8 +51,12 @@ The builds aren't notarized yet, so the first time you open it, right-click the 
 npm install
 npm run dev     # Electron app with hot reload
 npm run web     # browser-only (YouTube + local files; no Spotify/Music bridge)
-npm run dist    # build the Mac app: release/*.dmg and *.zip for Apple Silicon and Intel
+npm run dist:mac    # release/*.dmg and *.zip for Apple Silicon and Intel
+npm run dist:win    # Windows installer (build on Windows)
+npm run dist:linux  # AppImage and .deb (build on Linux)
 ```
+
+Pushing a tag like `v0.2.0` builds all three on GitHub Actions and attaches them to a draft release (`.github/workflows/release.yml`).
 
 ### Controls
 
@@ -57,6 +68,7 @@ npm run dist    # build the Mac app: release/*.dmg and *.zip for Apple Silicon a
 | 33 / 45 buttons, pitch slider | Speed |
 | Dust cover | Click to open / close |
 | Album jacket | Click to change the record |
+| Double-click empty space | Reset the view |
 | Drag empty space | Orbit the camera; scroll to zoom |
 | `Space` | Play / pause |
 | `←` `→` | Seek ±10 s |
@@ -67,14 +79,20 @@ npm run dist    # build the Mac app: release/*.dmg and *.zip for Apple Silicon a
 ```
 electron/
   main.js          window, local http server (YouTube embeds need an http origin), IPC
-  nowplaying.js    Spotify / Music bridge via osascript, artwork lookup
+  nowplaying*.js   what's playing: AppleScript (macOS), WinRT media session (Windows), playerctl (Linux)
+  widgets.js       the desktop widget windows
   preload.cjs      the window.needledrop API exposed to the renderer
 src/
   main.js          app controller: sources ↔ scene, transport, input, settings
   scene/turntable.js  geometry, tonearm kinematics, cueing state machine
-  scene/textures.js   procedural grooves, label, sheen, wood grain, strobe
+  scene/textures.js   procedural grooves, label, wood grain, strobe, sleeve, lid surface
+  scene/room.js       wall and window light
+  scene/speakers.js   bookshelf speakers
+  scene/videoStand.js tablet stand for YouTube video
+  widget.js           the desktop widgets (2D canvas)
   sources/         system.js, youtube.js, local.js (one shared interface)
   audio/crackle.js synthesised surface noise and needle sounds
+  audio/levels.js  listens to playback so the speakers can move
 ```
 
 ### Adding a source
@@ -83,10 +101,9 @@ A source is an object with `poll() → { track, position, duration, playing }` p
 
 ## Roadmap ideas
 
-- Windows / Linux now-playing (SMTC / MPRIS)
-- Spotify Web API source for non-macOS platforms
-- Hinged dust cover, more finishes, picture discs
-- Menu-bar mini player
+- Code signing and notarization
+- More finishes, picture discs and coloured splatter pressings
+- Album-art thumbnails from the Windows media session
 
 ## Credits
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>Needledrop widget</title>
+  </head>
+  <body>
+    <div class="card">
+      <canvas id="c"></canvas>
+      <div class="meta">
+        <div class="title" id="title"></div>
+        <div class="artist" id="artist"></div>
+      </div>
+      <div class="controls">
+        <button data-cmd="prev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM19 6v12l-9-6z"/></svg></button>
+        <button data-cmd="toggle" class="play" aria-label="Play or pause"><svg viewBox="0 0 24 24"><path id="pp" d="M8 5v14l11-7z"/></svg></button>
+        <button data-cmd="next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 6v12l9-6z"/></svg></button>
+      </div>
+      <div class="progress"><i id="bar"></i></div>
+      <button class="hit" id="hit" aria-label="Play or pause"></button>
+    </div>
+    <script type="module" src="/src/widget.js"></script>
+  </body>
+</html>

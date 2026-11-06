@@ -1,6 +1,10 @@
-// Reads and controls whatever is playing in Spotify or Apple Music via AppleScript (macOS only).
-// No API keys, no login: it talks to the desktop apps the user already has open.
+// Reads and controls whatever the computer is playing. No API keys, no login:
+//   macOS   — Spotify and Apple Music, via AppleScript
+//   Windows — the system media session (Spotify, browsers, most players), via WinRT in PowerShell
+//   Linux   — any MPRIS player (Spotify, Rhythmbox, browsers…), via playerctl
 import { execFile } from 'node:child_process';
+import * as windows from './nowplaying-windows.js';
+import * as linux from './nowplaying-linux.js';
 
 let fetchImage = async () => null;
 export const setImageFetcher = (fn) => { fetchImage = fn; };
@@ -37,6 +41,7 @@ async function readApp(key) {
   if (key === 'spotify') duration /= 1000;
   return {
     app: key,
+    via: key === 'spotify' ? 'Spotify' : 'Apple Music',
     playing: state === 'playing',
     title, artist, album,
     duration,
@@ -46,7 +51,7 @@ async function readApp(key) {
 }
 
 const artCache = new Map();
-async function artFor(s) {
+export async function artFor(s) {
   const key = `${s.artist}|${s.album}`;
   if (artCache.has(key)) return artCache.get(key);
   let url = s.artUrl;
@@ -65,7 +70,9 @@ async function artFor(s) {
 }
 
 export async function getState() {
-  if (process.platform !== 'darwin') return { supported: false };
+  if (process.platform === 'win32') return withArt(await windows.getState());
+  if (process.platform === 'linux') return withArt(await linux.getState());
+  if (process.platform !== 'darwin') return { supported: false, reason: 'platform' };
   const [sp, mu] = await Promise.all([readApp('spotify'), readApp('music')]);
   // Prefer whichever is actually playing; otherwise stick with the last active one.
   let s = [sp, mu].find((x) => x?.playing) || (activeApp === 'music' ? mu || sp : sp || mu);
@@ -74,7 +81,14 @@ export async function getState() {
   return { supported: true, track: { ...s, art: await artFor(s) } };
 }
 
+async function withArt(r) {
+  if (!r.track) return r;
+  return { ...r, track: { ...r.track, art: await artFor(r.track) } };
+}
+
 export async function command(cmd, arg) {
+  if (process.platform === 'win32') return windows.command(cmd, arg);
+  if (process.platform === 'linux') return linux.command(cmd, arg);
   if (process.platform !== 'darwin') return false;
   const name = APPS[activeApp || 'spotify'];
   const body = {

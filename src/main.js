@@ -17,14 +17,23 @@ import { SystemSource } from './sources/system.js';
 import { YouTubeSource } from './sources/youtube.js';
 import { LocalSource } from './sources/local.js';
 import { Vinyl } from './audio/crackle.js';
+import { Levels } from './audio/levels.js';
+import { Speakers } from './scene/speakers.js';
 
 const $ = (s) => document.querySelector(s);
 const isDesktop = !!window.needledrop;
 document.body.classList.toggle('desktop', isDesktop);
+const isMac = /mac/i.test(navigator.platform);
+document.body.classList.toggle('mac', isMac);
+if (!isMac) {
+  // Off macOS the system source follows any media player, not just Spotify and Music.
+  document.querySelector('[data-source="system"]').textContent = 'Now playing';
+  document.querySelector('#panel-system .panel-title').textContent = 'Your music player';
+}
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -84,6 +93,8 @@ scene.add(table);
 const room = new Room(scene, TABLE_Y);
 
 const deck = new Turntable(scene);
+const speakers = new Speakers(scene, TABLE_Y, deck.mat.wood);
+const levels = new Levels();
 const stand = new VideoStand(scene, $('#yt-screen'), TABLE_Y);
 
 // ---------- post: ambient occlusion for contact shadows, bloom so LEDs glow ----------
@@ -125,7 +136,7 @@ cssRenderer.render(scene, camera);
 stand.group.visible = false;
 
 // Far enough to fit the deck, the sleeve on the left and the video stand on the right, at any window shape.
-const defaultDistance = () => Math.max(104, 48 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+const defaultDistance = () => Math.max(106, 53 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
 // ~36° above the table, like a photo taken from a chair: the lit wall fills the top of the frame.
 const defaultOffset = (dist) => new THREE.Vector3(0, dist * 0.59, dist * 0.81);
 let viewTween = null; // { from, to, t } — eases the camera back to the default framing
@@ -160,6 +171,12 @@ frameCamera();
 
 // ---------- sources ----------
 const vinyl = new Vinyl();
+// First user gesture: unlock audio, and start listening so the speakers can move.
+function wake() {
+  vinyl.unlock();
+  if (window.needledrop) levels.startFromWindow();
+  else levels.startFromElement(sources.local.audio);
+}
 vinyl.setLevel(settings.crackle);
 const sources = {
   system: new SystemSource(),
@@ -221,13 +238,27 @@ async function onTrack(track) {
 }
 
 let lastArt = null;
+const widgetLook = { vinyl: '#0c0c0c', tint: null, art: null };
+// Widgets get the same letterbox-trimmed art as the label, as a small square JPEG.
+function squareArt(img) {
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const s = Math.max(256 / img.width, 256 / img.height);
+    c.getContext('2d').drawImage(img, (256 - img.width * s) / 2, (256 - img.height * s) / 2, img.width * s, img.height * s);
+    return c.toDataURL('image/jpeg', 0.86);
+  } catch { return null; }
+}
 async function pressRecord(track, animate = true) {
   const img = await loadImage(track?.art);
   lastArt = { img, track };
+  widgetLook.tint = img ? `#${dominantColor(img).getHexString()}` : null;
+  widgetLook.art = img ? squareArt(img) : null;
   const color = settings.vinyl === 'color' && img
     ? dominantColor(img).lerp(new THREE.Color(0x0a0a0a), 0.12)
     : new THREE.Color(0x0c0c0c);
   deck.setRecord({ img, vinyl: color, track }, animate);
+  widgetLook.vinyl = `#${color.getHexString()}`;
 }
 
 function switchSource(name, { open = true } = {}) {
@@ -255,7 +286,7 @@ function renderPanels() {
 
 // ---------- transport ----------
 async function play() {
-  vinyl.unlock();
+  wake();
   if (!snap.track) {
     polling = false;
     await poll();
@@ -339,7 +370,7 @@ function setPointer(e) {
 
 addEventListener('pointerdown', (e) => {
   if (e.target !== canvas) return;
-  vinyl.unlock();
+  wake();
   setPointer(e);
   const hit = deck.pick(ray);
   if (!hit) {
@@ -421,7 +452,7 @@ $('#settings-btn').addEventListener('click', () => {
 
 $('#yt-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  vinyl.unlock();
+  wake();
   const url = $('#yt-url').value;
   if (await sources.youtube.load(url)) {
     settings.ytUrl = url;
@@ -437,7 +468,7 @@ $('#yt-show').checked = !!settings.showVideo;
 $('#yt-show').addEventListener('change', (e) => { settings.showVideo = e.target.checked; save(); });
 
 async function addFiles(files) {
-  vinyl.unlock();
+  wake();
   const n = await sources.local.add(files);
   if (!n) return;
   if (source !== sources.local) switchSource('local', { open: false });
@@ -517,6 +548,9 @@ function setVinylMode(v) {
   if (lastArt) pressRecord(lastArt.track, false);
 }
 document.querySelectorAll('#vinyl-mode button').forEach((b) => b.addEventListener('click', () => setVinylMode(b.dataset.v)));
+$('#speakers').checked = settings.speakers;
+speakers.visible = settings.speakers;
+$('#speakers').addEventListener('change', (e) => { settings.speakers = e.target.checked; speakers.visible = e.target.checked; save(); });
 $('#crackle').value = settings.crackle;
 $('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle); save(); });
 $('#pin').addEventListener('change', (e) => window.needledrop?.pin(e.target.checked));
@@ -524,6 +558,33 @@ $('#compact').addEventListener('change', (e) => {
   document.body.classList.toggle('compact', e.target.checked);
   window.needledrop?.compact(e.target.checked);
 });
+
+// ---------- desktop widgets (Electron only) ----------
+const bridge = window.needledrop;
+if (bridge?.getWidgets) {
+  const boxes = { record: $('#w-record'), strip: $('#w-strip'), onTop: $('#w-top') };
+  const apply = (p) => { for (const [k, el] of Object.entries(boxes)) el.checked = !!p[k]; };
+  bridge.getWidgets().then(apply);
+  for (const [k, el] of Object.entries(boxes)) el.addEventListener('change', async () => apply(await bridge.setWidgets({ [k]: el.checked })));
+  bridge.onWidgetClosed((k) => { boxes[k].checked = false; });
+  bridge.onRemoteCommand((cmd) => {
+    if (cmd === 'toggle') { deck.press('start'); toggle(); }
+    if (cmd === 'next') source.next();
+    if (cmd === 'prev') source.prev();
+  });
+}
+let sentArt;
+function broadcastToWidgets(progress, wantsPlay) {
+  if (!bridge?.broadcast) return;
+  const t = snap.track;
+  const art = widgetLook.art;
+  bridge.broadcast({
+    title: t?.title || '', artist: t?.artist || '', playing: wantsPlay, progress,
+    vinyl: widgetLook.vinyl, tint: widgetLook.tint,
+    ...(art !== sentArt ? { art } : {}),
+  });
+  sentArt = art;
+}
 
 setFinish(settings.finish);
 setVinylMode(settings.vinyl);
@@ -549,6 +610,8 @@ function frame(fixedDt) {
   const mode = !snap.track ? 'rest' : wantsPlay ? 'play' : 'cue';
   deck.update(dt, { mode, progress, spinning: wantsPlay });
   vinyl.surfaceOn(deck.landed && snap.playing);
+  levels.update(dt);
+  speakers.update(snap.playing ? levels.bass : 0, snap.playing ? levels.mid : 0);
 
   if ((uiTick += dt) > 0.2) {
     uiTick = 0;
@@ -560,6 +623,7 @@ function frame(fixedDt) {
     document.body.classList.toggle('empty', !snap.track);
     if (!snap.track) $('#t-sub').textContent = source.note || '';
     renderPanels();
+    broadcastToWidgets(progress, wantsPlay);
   }
   placeCoach();
 
@@ -605,4 +669,4 @@ function cutVideoHole() {
 }
 renderer.setAnimationLoop(() => frame());
 
-if (import.meta.env.DEV) window.__nd = { frame, renderer, scene, camera, controls, deck, snap, sources, settings };
+if (import.meta.env.DEV) window.__nd = { frame, levels, speakers, renderer, scene, camera, controls, deck, snap, sources, settings };

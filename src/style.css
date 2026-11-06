@@ -59,10 +59,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---- title bar ---- */
 .titlebar {
   position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 3;
-  display: flex; align-items: center; gap: 12px; padding: 0 16px 0 90px;
-  -webkit-app-region: drag;
+  display: flex; align-items: center; gap: 12px; padding: 0 16px 0 22px;
 }
-body:not(.desktop) .titlebar { padding-left: 22px; }
+/* macOS: the title bar is ours (traffic lights sit over the scene), so leave room and make it draggable. */
+body.desktop.mac .titlebar { padding-left: 90px; -webkit-app-region: drag; }
 .titlebar > * { -webkit-app-region: no-drag; }
 .brand { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-2); -webkit-app-region: drag; }
 .sources {
