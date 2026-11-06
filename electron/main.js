@@ -39,9 +39,30 @@ let winReady = false;
 // Audio files opened with Needledrop: double-click / Open With / dropped on the Dock (macOS 'open-file'),
 // or passed on the command line (Windows, Linux). They're queued until the window can take them.
 const AUDIO_EXT = /\.(mp3|m4a|aac|flac|wav|ogg|opus|aiff?)$/i;
-let pendingFiles = process.platform === 'darwin' ? [] : process.argv.slice(1).filter((a) => AUDIO_EXT.test(a));
-function openFiles(paths) {
-  const files = paths.filter((p) => AUDIO_EXT.test(p));
+let pendingFiles = [];
+// Folders become their audio files: recursive, natural order (01, 02 … 10), hidden files skipped.
+async function expandPaths(paths, limit = 5000) {
+  const out = [];
+  const natural = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  async function walk(p, depth) {
+    if (out.length >= limit) return;
+    let st;
+    try { st = await fs.promises.stat(p); } catch { return; }
+    if (st.isDirectory()) {
+      if (depth > 6) return;
+      let names = [];
+      try { names = await fs.promises.readdir(p); } catch { return; }
+      for (const n of names.filter((n) => !n.startsWith('.')).sort(natural)) await walk(path.join(p, n), depth + 1);
+    } else if (AUDIO_EXT.test(p)) {
+      out.push(p);
+    }
+  }
+  for (const p of paths) await walk(p, 0);
+  return out;
+}
+
+async function openFiles(paths) {
+  const files = await expandPaths(paths.filter((p) => !p.startsWith('-')));
   if (!files.length) return;
   if (win && winReady) {
     win.webContents.send('files:open', files);
@@ -53,6 +74,8 @@ function openFiles(paths) {
   }
 }
 app.on('open-file', (e, file) => { e.preventDefault(); openFiles([file]); });
+// Windows / Linux pass files and folders on the command line.
+if (process.platform !== 'darwin') openFiles(process.argv.slice(app.isPackaged ? 1 : 2));
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', (_e, argv) => {
   openFiles(argv.slice(1));
@@ -151,6 +174,7 @@ ipcMain.handle('np:command', (_e, cmd, arg) => nowPlaying.command(cmd, arg));
 
 ipcMain.handle('img:fetch', async (_e, url) => fetchAsDataUrl(url));
 
+ipcMain.handle('files:expand', (_e, paths) => expandPaths(Array.isArray(paths) ? paths : []));
 ipcMain.handle('files:read', (_e, filePath) => (AUDIO_EXT.test(filePath) ? fs.promises.readFile(filePath) : null));
 
 ipcMain.handle('files:meta', async (_e, filePath) => {

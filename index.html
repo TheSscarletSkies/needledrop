@@ -39,6 +39,8 @@
       <p class="panel-title">Your files</p>
       <div class="row">
         <label class="file-btn">Add files<input id="file-input" type="file" accept="audio/*" multiple hidden /></label>
+        <label class="file-btn ghost">Add folder<input id="folder-input" type="file" webkitdirectory hidden /></label>
+        <button class="link-btn" id="clear-queue">Clear</button>
         <p class="note" data-note="local"></p>
       </div>
       <ol id="queue"></ol>
@@ -47,7 +49,7 @@
     <div id="yt-screen"><div id="yt-host"></div></div>
 
     <footer class="deck">
-      <div class="progress" aria-hidden="true"><i id="t-progress"></i></div>
+      <div class="progress" id="seek" role="slider" aria-label="Seek"><i id="t-progress"></i></div>
       <div class="meta">
         <div class="title" id="t-title">Nothing on the platter</div>
         <div class="sub"><span id="t-sub"></span><span id="t-via"></span></div>

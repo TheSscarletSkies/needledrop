@@ -102,11 +102,14 @@ body.desktop.mac .titlebar { padding-left: 90px; -webkit-app-region: drag; }
   background: rgba(0, 0, 0, 0.18); color: var(--ink); font: inherit; user-select: text;
 }
 body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
-#yt-form button, .file-btn {
+#yt-form button, .file-btn, .file-btn.ghost {
   padding: 8px 14px; border-radius: 9px; border: 0; background: var(--ink); color: var(--bg);
   font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 13px;
 }
-.row { display: flex; align-items: center; gap: 12px; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.file-btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.link-btn { margin-left: auto; border: 0; background: none; color: var(--ink-3); font-size: 12px; padding: 4px; }
+.link-btn:hover { color: var(--ink); }
 .check { display: flex; gap: 8px; align-items: center; margin-top: 8px; color: var(--ink-2); cursor: pointer; }
 .check input { accent-color: var(--accent); }
 #queue { margin: 10px -6px 0; padding: 0; list-style: none; }
@@ -134,8 +137,17 @@ body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
 }
 /* While a record plays and the pointer is still, the bar steps back. */
 body.idle .deck { opacity: 0.35; }
-.progress { position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: transparent; }
-.progress i { display: block; height: 100%; background: var(--ink-3); transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear; }
+.progress {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 9px; cursor: pointer; /* generous hit area, thin line */
+  background: linear-gradient(to top, var(--line) 1.5px, transparent 1.5px);
+}
+.progress i {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--ink-3);
+  transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear, height 0.15s;
+}
+.progress:hover i, .progress.dragging i { height: 3px; background: var(--ink-2); }
+.progress.dragging i { transition: height 0.15s; }
+body.empty .progress { display: none; }
 .meta { min-width: 0; max-width: 240px; }
 .title { font-family: var(--serif); font-size: 14px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sub { color: var(--ink-3); font-size: 11px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

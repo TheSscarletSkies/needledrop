@@ -30,6 +30,8 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Pick an evening or a daylight room in Settings; the deck finish never changes the room.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.
 - **Opens your audio files:** double-click an MP3, M4A, FLAC, WAV, OGG, AIFF or Opus file, use *Open With*, or drop files on the Dock icon, and it goes straight onto the platter. To make Needledrop the default for a file type on macOS, select a file in Finder, choose **File → Get Info → Open with → Needledrop**, then **Change All…**.
+- **Folders:** drop a folder of songs (subfolders too), use *Add folder*, or open one from Finder. Songs queue in track order (01, 2, 10) and the first one starts. In the desktop app only the playing song is held in memory.
+- **Seek anywhere:** click or drag the thin line under the now-playing bar, or drag the tonearm. Click the video tablet to play or pause.
 - **Volume and media keys:** a volume slider for YouTube and local files (or ↑ ↓), and your keyboard's play/next keys plus Control Center work for what Needledrop is playing.
 - **Your sideboard, your call:** turn the speakers, the video stand and the album sleeve on or off in Settings → On the sideboard.
 - **Desktop:** keep-on-top and a compact mode.

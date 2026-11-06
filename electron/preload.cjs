@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('needledrop', {
   fetchImage: (url) => ipcRenderer.invoke('img:fetch', url),
   fileMeta: (p) => ipcRenderer.invoke('files:meta', p),
   readFile: (p) => ipcRenderer.invoke('files:read', p),
+  expandPaths: (paths) => ipcRenderer.invoke('files:expand', paths),
   onOpenFiles: (cb) => ipcRenderer.on('files:open', (_e, paths) => cb(paths)),
   pathForFile: (file) => webUtils.getPathForFile(file),
   pin: (on) => ipcRenderer.invoke('win:pin', on),

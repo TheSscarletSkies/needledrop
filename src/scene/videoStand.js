@@ -46,6 +46,7 @@ export class VideoStand {
     const front = new THREE.Mesh(new RoundedBoxGeometry(BODY.w - 0.25, BODY.h - 0.25, 0.05, 4, 0.5), glass);
     front.position.set(0, BODY.h / 2, BODY.d / 2 + 0.01);
     this.tilt.add(front);
+    this.pickables = [front, body]; // clicking the tablet plays or pauses
 
     // Front lip of the slot, in front of the tablet's bottom edge.
     const lip = shadowy(new THREE.Mesh(new RoundedBoxGeometry(13, 1.1, 0.6, 2, 0.2), walnut));

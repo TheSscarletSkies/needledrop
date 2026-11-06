@@ -356,6 +356,31 @@ addEventListener('pointerdown', (e) => {
   if (panelOpen && snap.track && t !== canvas && !t.closest?.('.panel, .sources')) { panelOpen = false; renderPanels(); }
 });
 
+// ---------- seek bar: the hairline under the now-playing bar ----------
+const seekBar = $('#seek');
+let seeking = null; // fraction while dragging
+function seekFraction(e) {
+  const r = seekBar.getBoundingClientRect();
+  return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+}
+seekBar.addEventListener('pointerdown', (e) => {
+  if (!snap.track || !snap.duration) return;
+  seekBar.setPointerCapture(e.pointerId);
+  seeking = seekFraction(e);
+  seekBar.classList.add('dragging');
+});
+seekBar.addEventListener('pointermove', (e) => {
+  const f = seekFraction(e);
+  if (seeking !== null) seeking = f;
+  seekBar.title = snap.duration ? fmt(f * snap.duration) : '';
+});
+seekBar.addEventListener('pointerup', () => {
+  if (seeking === null) return;
+  seekTo(seeking * snap.duration);
+  seeking = null;
+  seekBar.classList.remove('dragging');
+});
+
 // While a record plays and the pointer rests, the now-playing bar fades back.
 let lastPointer = performance.now();
 for (const evt of ['pointermove', 'pointerdown', 'keydown', 'wheel']) addEventListener(evt, () => { lastPointer = performance.now(); document.body.classList.remove('idle'); }, { passive: true });
@@ -440,7 +465,7 @@ addEventListener('pointerdown', (e) => {
   if (e.target !== canvas) return;
   wake();
   setPointer(e);
-  const hit = deck.pick(ray);
+  const hit = deck.pick(ray) || pickVideo();
   if (!hit) {
     if (panelOpen && snap.track) { panelOpen = false; renderPanels(); }
     return;
@@ -464,6 +489,7 @@ addEventListener('pointerdown', (e) => {
     case 'cue': if (snap.track) toggle(); break;
     case 'cover': deck.toggleCover(); break;
     case 'sleeve': panelOpen = true; $('#settings').hidden = true; renderPanels(); break;
+    case 'video': toggle(); break;
   }
   canvas.className = drag ? 'grabbing' : '';
   showTip(null);
@@ -474,7 +500,7 @@ canvas.addEventListener('pointermove', (e) => {
   const p = new THREE.Vector3();
   if (drag === 'arm') { if (ray.ray.intersectPlane(armPlane, p)) deck.dragTo(p); return; }
   if (drag === 'pitch') { if (ray.ray.intersectPlane(pitchPlane, p)) setPitch(deck.pitchFromPoint(p)); return; }
-  const hit = deck.pick(ray);
+  const hit = deck.pick(ray) || pickVideo();
   canvas.className = hit === 'arm' || hit === 'pitch' ? 'grab' : hit ? 'pointer' : '';
   showTip(hit, e);
 });
@@ -490,7 +516,12 @@ const TIPS = {
   pitch: 'Pitch ±8%: drag to change speed',
   cover: 'Dust cover: click to open or close',
   sleeve: 'Album sleeve: change the record',
+  video: 'Click to play or pause',
 };
+// The video tablet, when it's out.
+function pickVideo() {
+  return stand.group.visible && ray.intersectObjects(stand.pickables, false).length ? 'video' : null;
+}
 const tip = $('#tip');
 function showTip(hit, e) {
   const text = !drag && TIPS[hit];
@@ -558,23 +589,51 @@ $('#yt-url').value = settings.ytUrl;
 $('#yt-show').checked = !!settings.showVideo;
 $('#yt-show').addEventListener('change', (e) => { settings.showVideo = e.target.checked; save(); });
 
+// Files or folders, from a drop or a picker: queue them and play the first new track.
 async function addFiles(files) {
   wake();
-  const n = await sources.local.add(files);
-  if (!n) return;
+  startQueued(await sources.local.add(files));
+}
+async function startQueued(first) {
+  if (first < 0) return;
   if (source !== sources.local) switchSource('local', { open: false });
-  if (!snap.playing) setTimeout(play, 300);
+  sources.local.jump(first);
+  polling = false;
+  await poll();
+  play();
 }
 $('#file-input').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+$('#folder-input').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+$('#clear-queue').addEventListener('click', () => { pause(); sources.local.clear(); polling = false; poll(); });
+
+// In a plain browser a dropped folder arrives as an entry tree; walk it into files, in album order.
+async function filesFromDrop(dt) {
+  const entries = [...dt.items].map((i) => i.webkitGetAsEntry?.()).filter(Boolean);
+  if (window.needledrop || !entries.some((en) => en.isDirectory)) return [...dt.files];
+  const out = [];
+  const readAll = (dir) => new Promise((resolve) => {
+    const reader = dir.createReader();
+    const all = [];
+    const next = () => reader.readEntries((batch) => { if (!batch.length) resolve(all); else { all.push(...batch); next(); } }, () => resolve(all));
+    next();
+  });
+  async function walk(en) {
+    if (en.isFile) out.push({ path: en.fullPath, file: await new Promise((r) => en.file(r, () => r(null))) });
+    else if (en.isDirectory) for (const child of await readAll(en)) await walk(child);
+  }
+  for (const en of entries) await walk(en);
+  return out.filter((o) => o.file).sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true })).map((o) => o.file);
+}
+
 let dragDepth = 0;
 addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; $('#drop-overlay').classList.add('on'); });
 addEventListener('dragleave', () => { if (--dragDepth <= 0) $('#drop-overlay').classList.remove('on'); });
 addEventListener('dragover', (e) => e.preventDefault());
-addEventListener('drop', (e) => {
+addEventListener('drop', async (e) => {
   e.preventDefault();
   dragDepth = 0;
   $('#drop-overlay').classList.remove('on');
-  addFiles(e.dataTransfer.files);
+  addFiles(await filesFromDrop(e.dataTransfer));
 });
 
 function renderQueue() {
@@ -685,15 +744,7 @@ if (bridge?.getWidgets) {
   });
 }
 // Audio files opened with Needledrop (double-click, Open With, dropped on the Dock icon).
-bridge?.onOpenFiles?.(async (paths) => {
-  const first = await sources.local.addPaths(paths);
-  if (first < 0) return;
-  if (source !== sources.local) switchSource('local', { open: false });
-  sources.local.jump(first);
-  polling = false;
-  await poll();
-  play();
-});
+bridge?.onOpenFiles?.(async (paths) => startQueued(await sources.local.addPaths(paths)));
 
 let sentArt;
 function broadcastToWidgets(progress, wantsPlay, mode) {
@@ -720,7 +771,8 @@ pressRecord(null, false);
 if (settings.ytUrl && source === sources.youtube) sources.youtube.load(settings.ytUrl);
 
 // ---------- loop ----------
-const fmt = (s) => (Number.isFinite(s) && s >= 0 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : '0:00');
+function fmt(s) { return fmtTime(s); }
+const fmtTime = (s) => (Number.isFinite(s) && s >= 0 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : '0:00');
 const timer = new THREE.Timer();
 timer.connect(document);
 let uiTick = 0;
@@ -742,9 +794,10 @@ function frame(fixedDt) {
 
   if ((uiTick += dt) > 0.2) {
     uiTick = 0;
-    $('#t-pos').textContent = fmt(pos);
-    $('#t-dur').textContent = snap.duration ? `−${fmt(snap.duration - pos)}` : '';
-    $('#t-progress').style.transform = `scaleX(${progress})`;
+    const shown = seeking !== null ? seeking * snap.duration : pos;
+    $('#t-pos').textContent = fmt(shown);
+    $('#t-dur').textContent = snap.duration ? `−${fmt(snap.duration - shown)}` : '';
+    $('#t-progress').style.transform = `scaleX(${seeking !== null ? seeking : progress})`;
     $('#play').setAttribute('aria-label', wantsPlay ? 'Pause' : 'Play');
     $('#play-icon').setAttribute('d', wantsPlay ? 'M7 5h3.5v14H7zM13.5 5H17v14h-3.5z' : 'M8 5v14l11-7z');
     document.body.classList.toggle('empty', !snap.track);
@@ -814,4 +867,4 @@ function cutVideoHole() {
 }
 renderer.setAnimationLoop(() => frame());
 
-if (import.meta.env.DEV) window.__nd = { frame, levels, speakers, renderer, scene, camera, controls, deck, snap, sources, settings };
+if (import.meta.env.DEV) window.__nd = { frame, levels, speakers, stand, renderer, scene, camera, controls, deck, snap, sources, settings };
