@@ -1,0 +1,88 @@
+{
+  "name": "needledrop",
+  "productName": "Needledrop",
+  "version": "0.1.0",
+  "description": "A 3D turntable music player for your desktop. Plays Spotify, Apple Music, YouTube and local files on a virtual record player.",
+  "license": "MIT",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5199 && cross-env VITE_DEV_SERVER_URL=http://localhost:5199 electron .\"",
+    "web": "vite",
+    "build": "vite build",
+    "start": "vite build && electron .",
+    "dist": "vite build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "app.needledrop",
+    "productName": "Needledrop",
+    "copyright": "MIT License",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "identity": null,
+      "darkModeSupport": true,
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Needledrop reads what's playing in Spotify and Music so it can spin the record."
+      }
+    },
+    "dmg": {
+      "title": "Needledrop",
+      "iconSize": 110,
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 140,
+          "y": 190
+        },
+        {
+          "x": 400,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "music-metadata": "^12.3.5"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "vite": "^8.3.6",
+    "wait-on": "^9.5.1",
+    "three": "^0.187.0"
+  },
+  "author": "Mariyam Ahmed"
+}

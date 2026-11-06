@@ -1,0 +1,208 @@
+/* Needledrop UI: the deck is the interface. HTML only carries what the hardware can't show —
+   what's playing, where it's coming from, and the transport for skipping tracks. */
+:root {
+  --bg: #16120f;
+  --ink: #f2ebe1;
+  --ink-2: rgba(242, 235, 225, 0.62);
+  --ink-3: rgba(242, 235, 225, 0.38);
+  --glass: rgba(24, 20, 17, 0.58);
+  --line: rgba(255, 255, 255, 0.08);
+  --accent: #ff8a3d;
+  --serif: 'Fraunces', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+body.light {
+  --bg: #d9cdc1;
+  --ink: #2a221d;
+  --ink-2: rgba(42, 34, 29, 0.64);
+  --ink-3: rgba(42, 34, 29, 0.4);
+  --glass: rgba(250, 245, 239, 0.62);
+  --line: rgba(0, 0, 0, 0.07);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+/* Lens vignette: keeps the eye on the deck. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2; /* above the 3D canvas */
+  pointer-events: none;
+  background: radial-gradient(130% 100% at 45% 42%, transparent 55%, rgba(0, 0, 0, 0.32));
+}
+body.light::after { background: radial-gradient(130% 100% at 45% 42%, transparent 60%, rgba(60, 40, 25, 0.14)); }
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; z-index: 1; }
+#scene.grab { cursor: grab; }
+#scene.grabbing { cursor: grabbing; }
+#scene.pointer { cursor: pointer; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--line);
+}
+
+/* ---- title bar ---- */
+.titlebar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 3;
+  display: flex; align-items: center; gap: 12px; padding: 0 16px 0 90px;
+  -webkit-app-region: drag;
+}
+body:not(.desktop) .titlebar { padding-left: 22px; }
+.titlebar > * { -webkit-app-region: no-drag; }
+.brand { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--ink-2); -webkit-app-region: drag; }
+.sources {
+  margin-left: auto; display: flex; padding: 3px; border-radius: 999px;
+  background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--line);
+}
+.sources button {
+  border: 0; background: none; padding: 6px 13px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.sources button:hover { color: var(--ink); }
+.sources button[aria-selected='true'] { background: var(--ink); color: var(--bg); }
+
+.icon-btn {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; padding: 0;
+  border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(20px);
+  transition: transform 0.15s var(--ease), background 0.2s;
+}
+.icon-btn:hover { transform: scale(1.06); }
+.icon-btn:active { transform: scale(0.95); }
+
+/* ---- source panels ---- */
+.panel {
+  position: fixed; top: 64px; right: 16px; width: 330px; max-height: calc(100% - 220px); overflow: auto; z-index: 3;
+  padding: 14px 14px 12px; border-radius: 14px; font-size: 13px;
+  background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line);
+  animation: rise 0.28s var(--ease);
+}
+.panel[hidden] { display: none; }
+@keyframes rise { from { opacity: 0; transform: translateY(-4px); } }
+.panel-title { margin: 0 0 10px; font-family: var(--serif); font-size: 16px; }
+.note { margin: 0; color: var(--ink-2); line-height: 1.45; }
+.note:empty { display: none; }
+#yt-form { display: flex; gap: 8px; margin-bottom: 8px; }
+#yt-form input {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.18); color: var(--ink); font: inherit; user-select: text;
+}
+body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
+#yt-form button, .file-btn {
+  padding: 8px 14px; border-radius: 9px; border: 0; background: var(--ink); color: var(--bg);
+  font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 13px;
+}
+.row { display: flex; align-items: center; gap: 12px; }
+.check { display: flex; gap: 8px; align-items: center; margin-top: 8px; color: var(--ink-2); cursor: pointer; }
+.check input { accent-color: var(--accent); }
+#queue { margin: 10px -6px 0; padding: 0; list-style: none; }
+#queue:empty { display: none; }
+#queue li { display: flex; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; color: var(--ink-2); }
+#queue li:hover { background: var(--line); }
+#queue li.on { color: var(--ink); }
+#queue li span:first-child { width: 16px; text-align: right; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+#queue li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The YouTube player lives on the tablet screen in the 3D scene (CSS3DRenderer). */
+.css3d { position: fixed !important; inset: 0; pointer-events: none; z-index: 0; } /* behind the canvas */
+#yt-screen { width: 640px; height: 360px; background: #000; opacity: 0; transition: opacity 0.6s var(--ease); }
+#yt-screen.on { opacity: 1; }
+#yt-screen iframe { width: 640px; height: 360px; border: 0; display: block; pointer-events: none; }
+
+/* ---- now playing ---- */
+.deck {
+  position: fixed; left: 20px; bottom: 20px; z-index: 3;
+  display: flex; align-items: flex-end; gap: 28px;
+  width: min(640px, calc(100% - 40px)); padding: 16px 18px 14px; border-radius: 16px; overflow: hidden;
+  background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line);
+}
+.progress { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--line); }
+.progress i { display: block; height: 100%; background: var(--ink-2); transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear; }
+.meta { flex: 1; min-width: 0; }
+.eyebrow { display: flex; gap: 10px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); height: 14px; }
+#t-rate { color: var(--accent); }
+.title { font-family: var(--serif); font-size: 21px; line-height: 1.2; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { color: var(--ink-2); font-size: 13px; margin-top: 2px; min-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.transport { display: flex; align-items: center; gap: 8px; }
+.transport .icon-btn { background: transparent; border-color: transparent; color: var(--ink-2); }
+.transport .icon-btn:hover { color: var(--ink); }
+.transport .icon-btn.play { width: 44px; height: 44px; background: var(--ink); color: var(--bg); }
+.time { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 36px; text-align: center; }
+body.empty .transport { opacity: 0.45; }
+
+/* ---- coach mark ---- */
+.coach {
+  position: fixed; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.coach.on { opacity: 1; }
+.coach::before {
+  content: ''; position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--ink); animation: pulse 1.8s var(--ease) infinite;
+}
+.coach span {
+  position: absolute; left: 18px; top: -32px; white-space: nowrap; font-size: 12px; padding: 6px 10px; border-radius: 8px;
+  background: var(--ink); color: var(--bg);
+}
+@keyframes pulse { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+/* ---- settings ---- */
+.settings {
+  position: fixed; top: 64px; right: 16px; width: 290px; padding: 4px 16px 16px; border-radius: 14px; z-index: 4;
+  background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line); font-size: 13px;
+  animation: rise 0.28s var(--ease);
+}
+.settings[hidden] { display: none; }
+.settings h3 {
+  display: flex; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3); margin: 16px 0 8px; font-weight: 600;
+}
+#finish-name { text-transform: none; letter-spacing: 0; color: var(--ink-2); font-weight: 400; font-size: 12px; }
+.swatches { display: flex; gap: 10px; }
+.swatches button {
+  width: 28px; height: 28px; border-radius: 50%; padding: 0; border: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 2px transparent;
+  transition: box-shadow 0.2s;
+}
+.swatches button[aria-pressed='true'] { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--bg), 0 0 0 3.5px var(--ink); }
+.seg { display: flex; padding: 3px; border-radius: 10px; background: var(--line); }
+.seg button { flex: 1; border: 0; background: none; padding: 6px; border-radius: 8px; color: var(--ink-2); font-size: 12px; }
+.seg button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
+.settings input[type='range'] { width: 100%; accent-color: var(--accent); }
+.legend { list-style: none; margin: 0; padding: 0; color: var(--ink-2); font-size: 12px; line-height: 1.55; }
+.legend b { color: var(--ink); font-weight: 600; }
+body:not(.desktop) .desktop-only { display: none; }
+
+.drop-overlay {
+  position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; opacity: 0; z-index: 10;
+  background: rgba(0, 0, 0, 0.35); transition: opacity 0.2s;
+}
+.drop-overlay div { font-family: var(--serif); font-size: 28px; font-style: italic; color: #fff; padding: 24px 36px; border: 1.5px dashed rgba(255, 255, 255, 0.6); border-radius: 18px; }
+.drop-overlay.on { opacity: 1; }
+
+/* Compact: the deck and a slim transport. */
+body.compact .panel, body.compact .sources, body.compact .brand, body.compact .eyebrow { display: none; }
+body.compact .deck { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 10px 12px; gap: 12px; }
+body.compact .title { font-size: 15px; }
+body.compact .time { display: none; }
+
+@media (max-width: 720px) {
+  .panel, .settings { left: 12px; right: 12px; width: auto; }
+  .deck { left: 12px; right: 12px; bottom: 12px; width: auto; gap: 12px; }
+  .time { display: none; }
+  .brand { display: none; }
+}

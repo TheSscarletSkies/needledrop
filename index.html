@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; worker-src 'self' blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* https:" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Needledrop</title>
+    <link rel="icon" href="/icon.svg" />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <header class="titlebar">
+      <div class="brand">Needledrop</div>
+      <nav class="sources" role="tablist" aria-label="Music source">
+        <button role="tab" data-source="system">Spotify · Music</button>
+        <button role="tab" data-source="youtube">YouTube</button>
+        <button role="tab" data-source="local">Files</button>
+      </nav>
+      <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
+      </button>
+    </header>
+
+    <section class="panel" id="panel-system" hidden>
+      <p class="panel-title">Spotify &amp; Apple Music</p>
+      <p class="note" data-note="system"></p>
+    </section>
+    <section class="panel" id="panel-youtube" hidden>
+      <p class="panel-title">YouTube</p>
+      <form id="yt-form">
+        <input id="yt-url" type="url" placeholder="Paste a YouTube video or playlist link" autocomplete="off" spellcheck="false" />
+        <button type="submit">Load</button>
+      </form>
+      <p class="note" data-note="youtube"></p>
+      <label class="check"><input type="checkbox" id="yt-show" /> Show the video on a stand</label>
+    </section>
+    <section class="panel" id="panel-local" hidden>
+      <p class="panel-title">Your files</p>
+      <div class="row">
+        <label class="file-btn">Add files<input id="file-input" type="file" accept="audio/*" multiple hidden /></label>
+        <p class="note" data-note="local"></p>
+      </div>
+      <ol id="queue"></ol>
+    </section>
+
+    <div id="yt-screen"><div id="yt-host"></div></div>
+
+    <footer class="deck">
+      <div class="progress" aria-hidden="true"><i id="t-progress"></i></div>
+      <div class="meta">
+        <div class="eyebrow"><span id="t-via"></span><span id="t-rate"></span></div>
+        <div class="title" id="t-title">Nothing on the platter</div>
+        <div class="sub" id="t-sub"></div>
+      </div>
+      <div class="transport">
+        <span class="time" id="t-pos">0:00</span>
+        <button class="icon-btn" id="prev" aria-label="Previous track"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 6h2v12H6zM19 6v12l-9-6z"/></svg></button>
+        <button class="icon-btn play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" width="20" height="20"><path id="play-icon" fill="currentColor" d="M8 5v14l11-7z"/></svg></button>
+        <button class="icon-btn" id="next" aria-label="Next track"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M16 6h2v12h-2zM5 6v12l9-6z"/></svg></button>
+        <span class="time" id="t-dur"></span>
+      </div>
+    </footer>
+
+    <div class="coach" id="coach" aria-hidden="true"><span>Lift the arm onto the record</span></div>
+
+    <aside class="settings" id="settings" hidden>
+      <h3>Finish <span id="finish-name"></span></h3>
+      <div class="swatches" id="finishes"></div>
+      <h3>Pressing</h3>
+      <div class="seg" id="vinyl-mode">
+        <button data-v="black">Black</button>
+        <button data-v="color">Coloured from art</button>
+      </div>
+      <h3>Surface noise</h3>
+      <input type="range" id="crackle" min="0" max="1" step="0.01" aria-label="Surface noise level" />
+      <div class="desktop-only">
+        <h3>Window</h3>
+        <label class="check"><input type="checkbox" id="pin" /> Keep on top</label>
+        <label class="check"><input type="checkbox" id="compact" /> Compact</label>
+      </div>
+      <h3>On the deck</h3>
+      <ul class="legend">
+        <li><b>Tonearm</b> drag onto the record to play, anywhere to seek</li>
+        <li><b>Cue lever</b> lift / lower the needle</li>
+        <li><b>33 · 45</b> speed; <b>Pitch</b> ±8 %</li>
+        <li><b>Lid</b> click to open or close</li>
+        <li><b>Sleeve</b> click to change the record</li>
+        <li><b>Keys</b> Space · ← → · N / P</li>
+      </ul>
+    </aside>
+
+    <div class="drop-overlay" id="drop-overlay"><div>Drop to put it on the platter</div></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
