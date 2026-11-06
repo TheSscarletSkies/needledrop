@@ -454,9 +454,11 @@ export class Turntable {
       color: 0xffffff, metalness: 0, roughness: 0.03, transmission: 1, thickness: T,
       ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.9, specularIntensity: 1, envMapIntensity: 1.5,
     });
+    // Polished cut edges: a pale, glossy line that catches the light, rather than a dark frame
+    // (which is what a tinted see-through edge looks like against a bright wall).
     const edge = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff, metalness: 0, roughness: 0.05, transmission: 1, thickness: 4,
-      ior: 1.49, attenuationColor: smoke, attenuationDistance: 0.55, envMapIntensity: 1.5,
+      color: 0xb8b3ad, metalness: 0, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05,
+      transparent: true, opacity: 0.45, depthWrite: false, envMapIntensity: 1.6,
     });
 
     this.cover = new THREE.Group();
