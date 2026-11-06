@@ -769,7 +769,8 @@ function frame(fixedDt) {
   // Nothing moving (paused, arm settled, camera still)? Drop to ~4 fps to save battery.
   const sig = [deck.theta, deck.lift, deck.spin, deck.coverT, deck.recordDrop, deck.pressed.size, stand.t, levels.bass,
     camera.position.x, camera.position.y, camera.position.z, settings.pitch, settings.rpm].map((v) => v.toFixed(4)).join();
-  const active = fixedDt !== undefined || sig !== lastSig || viewTween || drag;
+  // A turning platter is always motion, even when the arm creeps too slowly to register.
+  const active = fixedDt !== undefined || deck.spin > 0.001 || sig !== lastSig || viewTween || drag;
   lastSig = sig;
   idleFrames = active ? 0 : idleFrames + 1;
   if (idleFrames > 3 && idleFrames % 15 !== 0) return;
