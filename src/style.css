@@ -163,6 +163,7 @@ body.empty .transport { opacity: 0.45; }
 /* ---- settings ---- */
 .settings {
   position: fixed; top: 64px; right: 16px; width: 290px; padding: 4px 16px 16px; border-radius: 14px; z-index: 4;
+  max-height: calc(100% - 80px); overflow-y: auto; overscroll-behavior: contain;
   background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line); font-size: 13px;
   animation: rise 0.28s var(--ease);
 }
@@ -183,6 +184,7 @@ body.empty .transport { opacity: 0.45; }
 .seg button { flex: 1; border: 0; background: none; padding: 6px; border-radius: 8px; color: var(--ink-2); font-size: 12px; }
 .seg button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
 .settings input[type='range'] { width: 100%; accent-color: var(--accent); }
+.hint-inline { color: var(--ink-3); font-size: 11.5px; }
 .legend { list-style: none; margin: 0; padding: 0; color: var(--ink-2); font-size: 12px; line-height: 1.55; }
 .legend b { color: var(--ink); font-weight: 600; }
 body:not(.desktop) .desktop-only { display: none; }

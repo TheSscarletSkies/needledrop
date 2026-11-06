@@ -34,7 +34,6 @@
         <button type="submit">Load</button>
       </form>
       <p class="note" data-note="youtube"></p>
-      <label class="check"><input type="checkbox" id="yt-show" /> Show the video on a stand</label>
     </section>
     <section class="panel" id="panel-local" hidden>
       <p class="panel-title">Your files</p>
@@ -73,8 +72,10 @@
         <button data-v="black">Black</button>
         <button data-v="color">Coloured from art</button>
       </div>
-      <h3>Room</h3>
-      <label class="check"><input type="checkbox" id="speakers" /> Speakers that move with the music</label>
+      <h3>On the sideboard</h3>
+      <label class="check"><input type="checkbox" id="speakers" /> Speakers</label>
+      <label class="check"><input type="checkbox" id="yt-show" /> Video stand <span class="hint-inline">for YouTube</span></label>
+      <label class="check"><input type="checkbox" id="sleeve" /> Album sleeve</label>
       <h3>Surface noise</h3>
       <input type="range" id="crackle" min="0" max="1" step="0.01" aria-label="Surface noise level" />
       <div class="desktop-only">

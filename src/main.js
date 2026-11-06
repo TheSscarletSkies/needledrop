@@ -33,7 +33,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -553,6 +553,11 @@ document.querySelectorAll('#vinyl-mode button').forEach((b) => b.addEventListene
 $('#speakers').checked = settings.speakers;
 speakers.visible = settings.speakers;
 $('#speakers').addEventListener('change', (e) => { settings.speakers = e.target.checked; speakers.visible = e.target.checked; save(); });
+// The sleeve doubles as the "change record" button; with it gone, the source tabs still do that.
+const setSleeve = (on) => { deck.sleeve.visible = on; deck.sleevePickables.forEach((m) => { m.layers.set(on ? 0 : 1); }); };
+$('#sleeve').checked = settings.sleeve;
+setSleeve(settings.sleeve);
+$('#sleeve').addEventListener('change', (e) => { settings.sleeve = e.target.checked; setSleeve(e.target.checked); save(); });
 $('#crackle').value = settings.crackle;
 $('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle); save(); });
 $('#pin').addEventListener('change', (e) => window.needledrop?.pin(e.target.checked));

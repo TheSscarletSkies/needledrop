@@ -28,6 +28,7 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
 - **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Light finishes switch to a daylight room.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.
+- **Your sideboard, your call:** turn the speakers, the video stand and the album sleeve on or off in Settings → On the sideboard.
 - **Desktop:** keep-on-top and a compact mode.
 
 ## Music sources
