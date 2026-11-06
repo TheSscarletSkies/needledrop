@@ -8,7 +8,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: { main: resolve(import.meta.dirname, 'index.html'), widget: resolve(import.meta.dirname, 'widget.html') },
+      input: { main: resolve(import.meta.dirname, 'index.html'), widget: resolve(import.meta.dirname, 'widget.html'), deck: resolve(import.meta.dirname, 'deck.html') },
     },
   },
 });

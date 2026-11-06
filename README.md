@@ -21,7 +21,10 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Dust cover:** one moulded smoked-acrylic shell that refracts and tints what's behind it, on friction hinges, with rubber bumpers and a thumbprint where you'd lift it. Click it to open or close.
 - **Speakers that move with the music:** walnut bookshelf speakers whose woofer cones and tweeter domes respond to what's actually playing. They hear YouTube and local files on every platform, and everything on Windows. On macOS and Linux, Spotify and other players run in their own apps, which Needledrop can't hear, so the speakers stay still rather than fake it.
 - **Video on a stand:** YouTube video plays on a tablet in a walnut stand beside the deck, and it's properly hidden when the deck passes in front of it.
-- **Desktop widgets:** a spinning-record square and a now-playing strip, in native frosted glass tinted from the album art. They float on top or sit with your other windows; click to play or pause, double-click to open Needledrop.
+- **Desktop widgets:**
+  - **Turntable:** the same 3D deck, floating on your desktop with just its shadow. Drag an edge to resize it; it keeps its proportions and remembers its size and position. The tonearm, start/stop, cue lever, 33/45 and pitch all work and control the main window. Drag empty space to move it, double-click to open Needledrop, and hover for × to close it.
+  - **Now-playing strip:** a small spinning record with the title and transport, in frosted glass tinted from the album art.
+  - Both float on top by default, or can sit with your other windows.
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
 - **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Light finishes switch to a daylight room.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.

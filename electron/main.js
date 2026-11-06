@@ -116,10 +116,12 @@ ipcMain.handle('files:meta', async (_e, filePath) => {
 ipcMain.handle('widgets:get', () => widgets.getPrefs());
 ipcMain.handle('widgets:set', (_e, prefs) => widgets.set(prefs));
 ipcMain.on('widgets:state', (_e, state) => widgets.broadcast(state));
-ipcMain.on('widget:command', (_e, cmd) => {
+ipcMain.on('widget:command', (e, cmd, arg) => {
   if (cmd === 'open') { if (win) { win.show(); win.focus(); } else createWindow(); return; }
-  win?.webContents.send('remote:command', cmd);
+  if (cmd === 'close') { BrowserWindow.fromWebContents(e.sender)?.close(); return; }
+  win?.webContents.send('remote:command', cmd, arg);
 });
+ipcMain.on('widget:moveTo', (e, x, y) => BrowserWindow.fromWebContents(e.sender)?.setPosition(x, y));
 
 ipcMain.handle('win:pin', (_e, on) => { if (!win) return false; win.setAlwaysOnTop(!!on, 'floating'); return win.isAlwaysOnTop(); });
 ipcMain.handle('win:compact', (_e, on) => {

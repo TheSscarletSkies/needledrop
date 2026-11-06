@@ -64,7 +64,8 @@ controls.minPolarAngle = 0.08;
 controls.maxPolarAngle = 1.22;
 controls.minDistance = 35;
 controls.maxDistance = 170;
-controls.target.set(0, -3, 5);
+// Aim a little above the plinth so the speakers and the open lid have headroom at the top.
+controls.target.set(0, 2, -1);
 
 // Warm key from the upper left, like a lamp or window: a soft-edged pool of light that falls off
 // across the table, so the deck is lit and the room around it isn't.
@@ -136,7 +137,7 @@ cssRenderer.render(scene, camera);
 stand.group.visible = false;
 
 // Far enough to fit the deck, the sleeve on the left and the video stand on the right, at any window shape.
-const defaultDistance = () => Math.max(106, 53 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+const defaultDistance = () => Math.max(120, 56 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
 // ~36° above the table, like a photo taken from a chair: the lit wall fills the top of the frame.
 const defaultOffset = (dist) => new THREE.Vector3(0, dist * 0.59, dist * 0.81);
 let viewTween = null; // { from, to, t } — eases the camera back to the default framing
@@ -243,9 +244,10 @@ const widgetLook = { vinyl: '#0c0c0c', tint: null, art: null };
 function squareArt(img) {
   try {
     const c = document.createElement('canvas');
-    c.width = c.height = 256;
-    const s = Math.max(256 / img.width, 256 / img.height);
-    c.getContext('2d').drawImage(img, (256 - img.width * s) / 2, (256 - img.height * s) / 2, img.width * s, img.height * s);
+    const N = 512; // sharp enough for the label on a large deck widget
+    c.width = c.height = N;
+    const s = Math.max(N / img.width, N / img.height);
+    c.getContext('2d').drawImage(img, (N - img.width * s) / 2, (N - img.height * s) / 2, img.width * s, img.height * s);
     return c.toDataURL('image/jpeg', 0.86);
   } catch { return null; }
 }
@@ -562,25 +564,32 @@ $('#compact').addEventListener('change', (e) => {
 // ---------- desktop widgets (Electron only) ----------
 const bridge = window.needledrop;
 if (bridge?.getWidgets) {
-  const boxes = { record: $('#w-record'), strip: $('#w-strip'), onTop: $('#w-top') };
+  const boxes = { deck: $('#w-deck'), strip: $('#w-strip'), onTop: $('#w-top') };
   const apply = (p) => { for (const [k, el] of Object.entries(boxes)) el.checked = !!p[k]; };
   bridge.getWidgets().then(apply);
   for (const [k, el] of Object.entries(boxes)) el.addEventListener('change', async () => apply(await bridge.setWidgets({ [k]: el.checked })));
   bridge.onWidgetClosed((k) => { boxes[k].checked = false; });
-  bridge.onRemoteCommand((cmd) => {
+  bridge.onRemoteCommand((cmd, arg) => {
     if (cmd === 'toggle') { deck.press('start'); toggle(); }
     if (cmd === 'next') source.next();
     if (cmd === 'prev') source.prev();
+    if (cmd === 'pause') pause();
+    if (cmd === 'seek' && snap.track) { seekTo(arg * (snap.duration || 0)); play(); }
+    if (cmd === 'speed') { deck.press(arg > 40 ? '45' : '33'); setSpeed(arg); }
+    if (cmd === 'pitch') setPitch(arg);
   });
 }
 let sentArt;
-function broadcastToWidgets(progress, wantsPlay) {
+function broadcastToWidgets(progress, wantsPlay, mode) {
   if (!bridge?.broadcast) return;
   const t = snap.track;
   const art = widgetLook.art;
   bridge.broadcast({
     title: t?.title || '', artist: t?.artist || '', playing: wantsPlay, progress,
     vinyl: widgetLook.vinyl, tint: widgetLook.tint,
+    // For the 3D deck widget: drive its arm and platter the same way as this window's.
+    mode, spinning: wantsPlay, trackKey: t?.album || null,
+    finish: settings.finish, rpm: settings.rpm, pitch: settings.pitch,
     ...(art !== sentArt ? { art } : {}),
   });
   sentArt = art;
@@ -623,7 +632,7 @@ function frame(fixedDt) {
     document.body.classList.toggle('empty', !snap.track);
     if (!snap.track) $('#t-sub').textContent = source.note || '';
     renderPanels();
-    broadcastToWidgets(progress, wantsPlay);
+    broadcastToWidgets(progress, wantsPlay, mode);
   }
   placeCoach();
 

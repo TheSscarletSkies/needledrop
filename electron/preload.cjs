@@ -14,10 +14,11 @@ contextBridge.exposeInMainWorld('needledrop', {
   getWidgets: () => ipcRenderer.invoke('widgets:get'),
   setWidgets: (prefs) => ipcRenderer.invoke('widgets:set', prefs),
   broadcast: (state) => ipcRenderer.send('widgets:state', state),
-  onRemoteCommand: (cb) => ipcRenderer.on('remote:command', (_e, cmd) => cb(cmd)),
+  onRemoteCommand: (cb) => ipcRenderer.on('remote:command', (_e, cmd, arg) => cb(cmd, arg)),
   onWidgetClosed: (cb) => ipcRenderer.on('widgets:closed', (_e, kind) => cb(kind)),
 
   // Inside a widget window
   onWidgetState: (cb) => ipcRenderer.on('widget:state', (_e, state) => cb(state)),
-  widgetCommand: (cmd) => ipcRenderer.send('widget:command', cmd),
+  widgetCommand: (cmd, arg) => ipcRenderer.send('widget:command', cmd, arg),
+  widgetMoveTo: (x, y) => ipcRenderer.send('widget:moveTo', x, y),
 });

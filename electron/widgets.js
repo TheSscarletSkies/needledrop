@@ -1,11 +1,14 @@
-// Floating desktop widgets: a square spinning record, and a slim now-playing strip.
-// They're small frameless windows with native frosted glass. The main window owns playback;
-// it broadcasts state here and widgets send commands back.
+// Floating desktop widgets: the 3D turntable itself (transparent and resizable), and a slim
+// now-playing strip in frosted glass. The main window owns playback; it broadcasts state here and
+// widgets send commands back.
 import { app, BrowserWindow, screen } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SIZES = { record: { w: 220, h: 220 }, strip: { w: 360, h: 104 } };
+const KINDS = {
+  deck: { w: 440, h: 352, page: 'deck.html', resizable: true, min: [260, 208], max: [1200, 960] },
+  strip: { w: 360, h: 104, page: 'widget.html?kind=strip', resizable: false },
+};
 
 export class Widgets {
   constructor({ preload, getBaseUrl, onClosed }) {
@@ -16,19 +19,19 @@ export class Widgets {
     this.lastState = null;
     this.file = path.join(app.getPath('userData'), 'widgets.json');
     try { this.prefs = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch { this.prefs = {}; }
-    this.prefs = { record: false, strip: false, onTop: true, pos: {}, ...this.prefs };
+    this.prefs = { deck: false, strip: false, onTop: true, pos: {}, size: {}, ...this.prefs };
   }
 
   #save() { fs.writeFile(this.file, JSON.stringify(this.prefs), () => {}); }
 
-  getPrefs() { return { record: this.prefs.record, strip: this.prefs.strip, onTop: this.prefs.onTop }; }
+  getPrefs() { return { deck: this.prefs.deck, strip: this.prefs.strip, onTop: this.prefs.onTop }; }
 
-  async set({ record, strip, onTop }) {
+  async set({ deck, strip, onTop }) {
     if (onTop !== undefined && onTop !== this.prefs.onTop) {
       this.prefs.onTop = onTop;
       for (const w of Object.values(this.windows)) w.setAlwaysOnTop(onTop, 'floating');
     }
-    for (const [kind, want] of [['record', record], ['strip', strip]]) {
+    for (const [kind, want] of [['deck', deck], ['strip', strip]]) {
       if (want === undefined) continue;
       this.prefs[kind] = want;
       if (want && !this.windows[kind]) await this.#open(kind);
@@ -41,8 +44,8 @@ export class Widgets {
   // Default spot: top-right of the screen, stacked.
   #defaultPos(kind) {
     const { workArea } = screen.getPrimaryDisplay();
-    const { w } = SIZES[kind];
-    return { x: workArea.x + workArea.width - w - 24, y: workArea.y + 24 + (kind === 'strip' ? SIZES.record.h + 16 : 0) };
+    const { w } = this.#size(kind);
+    return { x: workArea.x + workArea.width - w - 24, y: workArea.y + 24 + (kind === 'strip' ? this.#size('deck').h + 16 : 0) };
   }
 
   // Keep a saved position only if it's still on a connected display.
@@ -55,18 +58,40 @@ export class Widgets {
     return this.#defaultPos(kind);
   }
 
+  #size(kind) {
+    const k = KINDS[kind];
+    const saved = this.prefs.size[kind];
+    return k.resizable && saved ? saved : { w: k.w, h: k.h };
+  }
+
   async #open(kind) {
-    const { w, h } = SIZES[kind];
+    const k = KINDS[kind];
+    const { w, h } = this.#size(kind);
     const { x, y } = this.#position(kind);
     const mac = process.platform === 'darwin';
+    // The deck floats on the desktop with only its own shadow; the strip is a frosted-glass card.
+    const look = kind === 'deck'
+      ? { transparent: true, backgroundColor: '#00000000', hasShadow: false }
+      : mac
+        ? { vibrancy: 'hud', visualEffectState: 'active', backgroundColor: '#00000000', hasShadow: true }
+        : { transparent: true, backgroundColor: '#00000000', hasShadow: true };
     const win = new BrowserWindow({
       width: w, height: h, x, y,
-      frame: false, resizable: false, maximizable: false, minimizable: false, fullscreenable: false,
-      skipTaskbar: true, hasShadow: true, show: false,
-      // Native frosted glass on macOS; elsewhere the page paints its own translucent card.
-      ...(mac ? { vibrancy: 'hud', visualEffectState: 'active', backgroundColor: '#00000000' } : { transparent: true, backgroundColor: '#00000000' }),
+      frame: false, resizable: k.resizable, maximizable: false, minimizable: false, fullscreenable: false,
+      skipTaskbar: true, show: false,
+      ...(k.resizable ? { minWidth: k.min[0], minHeight: k.min[1], maxWidth: k.max[0], maxHeight: k.max[1] } : {}),
+      ...look,
       webPreferences: { preload: this.preload, contextIsolation: true, nodeIntegration: false },
     });
+    win.widgetKind = kind;
+    if (k.resizable) {
+      win.setAspectRatio(k.w / k.h);
+      win.on('resized', () => {
+        const [rw, rh] = win.getSize();
+        this.prefs.size[kind] = { w: rw, h: rh };
+        this.#save();
+      });
+    }
     win.setAlwaysOnTop(this.prefs.onTop, 'floating');
     if (mac) win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
     win.once('ready-to-show', () => win.showInactive());
@@ -84,9 +109,11 @@ export class Widgets {
       }
     });
     this.windows[kind] = win;
-    await win.loadURL(`${this.getBaseUrl()}/widget.html?kind=${kind}`);
+    await win.loadURL(`${this.getBaseUrl()}/${k.page}`);
     if (this.lastState) win.webContents.send('widget:state', this.lastState);
   }
+
+  close(kind) { this.windows[kind]?.close(); }
 
   // Art is large, so it only travels when it changes.
   broadcast(state) {

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:" />
+    <title>Needledrop</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; }
+      canvas { display: block; width: 100%; height: 100%; outline: none; }
+      canvas.grab { cursor: grab; } canvas.grabbing { cursor: grabbing; } canvas.pointer { cursor: pointer; } canvas.move { cursor: move; }
+      #close {
+        position: fixed; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: 0; padding: 0;
+        display: grid; place-items: center; background: rgba(20, 16, 14, 0.7); color: #f2ebe1; cursor: pointer;
+        opacity: 0; transition: opacity 0.2s; font: 14px/1 -apple-system, sans-serif;
+      }
+      body:hover #close { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <button id="close" aria-label="Close widget" title="Close">×</button>
+    <script type="module" src="/src/deckWidget.js"></script>
+  </body>
+</html>
