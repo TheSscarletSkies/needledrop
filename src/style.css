@@ -123,29 +123,39 @@ body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
 #yt-screen.on { opacity: 1; }
 #yt-screen iframe { width: 640px; height: 360px; border: 0; display: block; pointer-events: none; }
 
-/* ---- now playing ---- */
+/* ---- now playing: a small, quiet bar, centred under the deck ---- */
 .deck {
-  position: fixed; left: 20px; bottom: 20px; z-index: 3;
-  display: flex; align-items: flex-end; gap: 28px;
-  width: min(760px, calc(100% - 40px)); padding: 16px 18px 14px; border-radius: 16px; overflow: hidden;
-  background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line);
+  position: fixed; left: 50%; bottom: 16px; z-index: 3; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px;
+  max-width: min(560px, calc(100% - 32px)); padding: 7px 8px 7px 14px; border-radius: 13px; overflow: hidden;
+  background: color-mix(in srgb, var(--glass) 70%, transparent); backdrop-filter: blur(18px) saturate(1.1);
+  border: 1px solid var(--line);
+  transition: opacity 0.6s var(--ease);
 }
-.progress { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--line); }
-.progress i { display: block; height: 100%; background: var(--ink-2); transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear; }
-.meta { flex: 1; min-width: 0; }
-.eyebrow { display: flex; gap: 10px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); height: 14px; }
-#t-rate { color: var(--accent); }
-.title { font-family: var(--serif); font-size: 21px; line-height: 1.2; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sub { color: var(--ink-2); font-size: 13px; margin-top: 2px; min-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.transport { display: flex; align-items: center; gap: 8px; }
-.transport .icon-btn { background: transparent; border-color: transparent; color: var(--ink-2); }
-.transport .icon-btn:hover { color: var(--ink); }
-.transport .icon-btn.play { width: 44px; height: 44px; background: var(--ink); color: var(--bg); }
-.time { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 36px; text-align: center; }
-body.empty .transport { opacity: 0.45; }
-.volume { display: flex; align-items: center; gap: 6px; margin-left: 4px; color: var(--ink-3); }
-.volume input { width: 72px; accent-color: var(--ink-2); }
-.mute { display: grid; place-items: center; width: 26px; height: 26px; border: 0; padding: 0; border-radius: 50%; background: none; color: var(--ink-3); }
+/* While a record plays and the pointer is still, the bar steps back. */
+body.idle .deck { opacity: 0.35; }
+.progress { position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: transparent; }
+.progress i { display: block; height: 100%; background: var(--ink-3); transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear; }
+.meta { min-width: 0; max-width: 240px; }
+.title { font-family: var(--serif); font-size: 14px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { color: var(--ink-3); font-size: 11px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#t-via:not(:empty)::before { content: ' · '; }
+#t-sub:empty + #t-via:not(:empty)::before { content: ''; }
+.transport { display: flex; align-items: center; gap: 2px; flex: none; }
+.transport .icon-btn { width: 28px; height: 28px; background: transparent; border-color: transparent; color: var(--ink-2); backdrop-filter: none; }
+.transport .icon-btn:hover { color: var(--ink); background: var(--line); transform: none; }
+.transport .icon-btn.play { width: 30px; height: 30px; background: transparent; border: 1px solid var(--ink-3); color: var(--ink); }
+.transport .icon-btn.play:hover { background: var(--line); }
+.time { font-size: 10.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 32px; text-align: center; white-space: nowrap; }
+#t-rate { color: var(--accent); margin-right: 6px; }
+#t-rate:empty { display: none; }
+/* Nothing loaded: just the hint, no controls to fiddle with. */
+body.empty .transport { display: none; }
+body.empty .deck { padding-right: 14px; }
+body.empty .meta { max-width: 420px; }
+.volume { display: flex; align-items: center; gap: 2px; margin-left: 2px; color: var(--ink-3); }
+.volume input { width: 56px; accent-color: var(--ink-3); }
+.mute { display: grid; place-items: center; width: 24px; height: 24px; border: 0; padding: 0; border-radius: 50%; background: none; color: var(--ink-3); }
 .mute:hover { color: var(--ink); background: var(--line); }
 body.muted .mute { color: var(--accent); }
 body.src-system .volume { display: none; } /* Spotify and Music have their own volume */
@@ -211,15 +221,15 @@ body:not(.desktop) .desktop-only { display: none; }
 .drop-overlay.on { opacity: 1; }
 
 /* Compact: the deck and a slim transport. */
-body.compact .panel, body.compact .sources, body.compact .brand, body.compact .eyebrow { display: none; }
-body.compact .deck { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 10px 12px; gap: 12px; }
-body.compact .title { font-size: 15px; }
-body.compact .time { display: none; }
+body.compact .panel, body.compact .sources, body.compact .brand { display: none; }
+body.compact .deck { bottom: 8px; gap: 8px; }
+body.compact .time, body.compact .volume { display: none; }
 
 @media (max-width: 720px) {
   .panel, .settings { left: 12px; right: 12px; width: auto; }
-  .deck { left: 12px; right: 12px; bottom: 12px; width: auto; gap: 12px; }
+  .deck { bottom: 10px; gap: 8px; }
   .time { display: none; }
+  .meta { max-width: 160px; }
   .brand { display: none; }
-  .volume input { width: 56px; }
+  .volume input { width: 44px; }
 }

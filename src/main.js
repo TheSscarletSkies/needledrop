@@ -356,6 +356,14 @@ addEventListener('pointerdown', (e) => {
   if (panelOpen && snap.track && t !== canvas && !t.closest?.('.panel, .sources')) { panelOpen = false; renderPanels(); }
 });
 
+// While a record plays and the pointer rests, the now-playing bar fades back.
+let lastPointer = performance.now();
+for (const evt of ['pointermove', 'pointerdown', 'keydown', 'wheel']) addEventListener(evt, () => { lastPointer = performance.now(); document.body.classList.remove('idle'); }, { passive: true });
+setInterval(() => {
+  const idle = snap.playing && performance.now() - lastPointer > 3500 && $('#settings').hidden && !panelOpen;
+  document.body.classList.toggle('idle', idle);
+}, 500);
+
 // ---------- volume (YouTube and local files; Spotify/Music keep their own) ----------
 let unmuteTo = null; // volume to restore when un-muting
 function setVolume(v) {
