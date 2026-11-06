@@ -33,7 +33,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85 },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening' },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -572,22 +572,33 @@ const THEMES = {
   dark: { bg: 0x16120f, table: '#2b2521', exposure: 1.0 },
   light: { bg: 0xd2c9bd, table: '#a39a8e', exposure: 0.8 }, // neutral greige, darker than the pale decks
 };
+// The finish only changes the turntable (and the speakers, which share its veneer).
 function setFinish(name) {
   settings.finish = name;
   save();
   const f = deck.setFinish(name);
-  const theme = THEMES[f.theme];
-  document.body.classList.toggle('light', f.theme === 'light');
-  scene.background = new THREE.Color(theme.bg);
-  scene.fog.color.set(theme.bg);
-  renderer.toneMappingExposure = theme.exposure;
-  room.setTheme(f.theme);
-  tableMat.map?.dispose();
-  tableMat.map = makeTableTexture(theme.table);
-  tableMat.needsUpdate = true;
   $('#finish-name').textContent = f.label;
   finishes.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.finish === name)));
 }
+
+// The room is its own choice: warm evening light (default) or a bright daylight room.
+function setRoom(name) {
+  settings.room = name === 'daylight' ? 'daylight' : 'evening';
+  save();
+  const t = settings.room === 'daylight' ? 'light' : 'dark';
+  const theme = THEMES[t];
+  document.body.classList.toggle('light', t === 'light');
+  scene.background = new THREE.Color(theme.bg);
+  scene.fog.color.set(theme.bg);
+  renderer.toneMappingExposure = theme.exposure;
+  room.setTheme(t);
+  tableMat.map?.dispose();
+  tableMat.map = makeTableTexture(theme.table);
+  tableMat.needsUpdate = true;
+  document.querySelectorAll('#room-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.room === settings.room)));
+}
+document.querySelectorAll('#room-mode button').forEach((b) => b.addEventListener('click', () => setRoom(b.dataset.room)));
+
 function setVinylMode(v) {
   settings.vinyl = v;
   save();
@@ -657,6 +668,7 @@ function broadcastToWidgets(progress, wantsPlay, mode) {
 }
 
 setFinish(settings.finish);
+setRoom(settings.room);
 setVinylMode(settings.vinyl);
 setVolume(settings.volume);
 switchSource(source.name, { open: false });

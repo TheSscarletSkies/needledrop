@@ -127,7 +127,7 @@ body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
 .deck {
   position: fixed; left: 20px; bottom: 20px; z-index: 3;
   display: flex; align-items: flex-end; gap: 28px;
-  width: min(640px, calc(100% - 40px)); padding: 16px 18px 14px; border-radius: 16px; overflow: hidden;
+  width: min(760px, calc(100% - 40px)); padding: 16px 18px 14px; border-radius: 16px; overflow: hidden;
   background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line);
 }
 .progress { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--line); }
