@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import {
   RECORD, FINISHES, makeRecordTextures, makeWoodTexture, makeStrobeRow, makeScaleRing, makeLegend,
-  makeSleeveTexture, turnedMetalAnisotropy, makeLidSurface,
+  makeSleeveTexture, makeBoardBump, makeInnerSleeveTexture, turnedMetalAnisotropy, makeLidSurface,
 } from './textures.js';
 
 const PLINTH = { w: 46, d: 36, h: 7 };
@@ -563,7 +563,8 @@ export class Turntable {
 
   // ---------------- album jacket ----------------
   #sleeve() {
-    this.sleeveTop = new THREE.MeshStandardMaterial({ roughness: 0.62 });
+    // Printed board with a linen emboss you can see where the window light rakes across it.
+    this.sleeveTop = new THREE.MeshStandardMaterial({ roughness: 0.7, bumpMap: makeBoardBump(), bumpScale: 0.6 });
     const edge = new THREE.MeshStandardMaterial({ color: 0xd9d2c5, roughness: 0.85 });
     this.sleeve = new THREE.Group();
     this.sleeve.position.set(-45, TABLE_Y, 3);
@@ -573,7 +574,7 @@ export class Turntable {
     jacket.position.y = 0.36;
     jacket.userData.button = 'sleeve';
     // Paper inner sleeve slipping out of the open side.
-    const inner = this.#mesh(new THREE.BoxGeometry(30.6, 0.12, 30.6), new THREE.MeshStandardMaterial({ color: 0xe6dccb, roughness: 0.95 }), this.sleeve);
+    const inner = this.#mesh(new THREE.BoxGeometry(30.6, 0.12, 30.6), new THREE.MeshStandardMaterial({ map: makeInnerSleeveTexture(), roughness: 0.95 }), this.sleeve);
     inner.position.set(3.0, 0.07, -0.2);
     inner.rotation.y = -0.05;
     inner.userData.button = 'sleeve';

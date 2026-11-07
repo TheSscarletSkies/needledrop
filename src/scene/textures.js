@@ -404,29 +404,168 @@ export function makeLegend(w, h, draw, scale = 64) {
 }
 
 // Album jacket: printed art with ring wear and softened corners.
+// The jacket a record comes in when it has no artwork of its own: a "house" sleeve, printed in
+// two inks on a linen-embossed board. Clay board, a sunrise of grooves in blush and ochre,
+// with the slight misregistration and ink speckle of a real press run.
+const HOUSE = { board: '#6e3d36', cream: '#efe2cc', blush: '#e2a593', ochre: '#d4a04c', ink: '#2b1a16' };
+
+function drawHouseSleeve(ctx, S, track) {
+  const rand = rng(11);
+  ctx.fillStyle = HOUSE.board;
+  ctx.fillRect(0, 0, S, S);
+  // Board fibre: faint light and dark flecks.
+  for (let i = 0; i < 9000; i++) {
+    ctx.fillStyle = rand() > 0.5 ? 'rgba(255,240,225,0.05)' : 'rgba(20,6,4,0.07)';
+    ctx.fillRect(rand() * S, rand() * S, 1 + rand() * 3, 1);
+  }
+
+  // The sunrise: a record half-risen over the lower edge, its grooves in alternating inks.
+  const cx = S * 0.5, cy = S * 0.94;
+  const print = (dx, dy, draw) => { ctx.save(); ctx.translate(dx, dy); draw(); ctx.restore(); };
+  const bands = [[0.86, HOUSE.blush], [0.74, HOUSE.board], [0.7, HOUSE.ochre], [0.6, HOUSE.board], [0.57, HOUSE.blush],
+    [0.46, HOUSE.board], [0.43, HOUSE.cream], [0.24, HOUSE.ochre], [0.09, HOUSE.board]];
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, S, S * 0.9); // the "horizon": the sun sits on a ruled line
+  ctx.clip();
+  bands.forEach(([r, color], i) => {
+    // Each ink is laid separately, so the blush and ochre sit a hair off register.
+    const off = color === HOUSE.blush ? [3, -2] : color === HOUSE.ochre ? [-2, 2] : [0, 0];
+    print(off[0], off[1], () => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, S * r * 0.5 * 1.08, Math.PI, 0);
+      ctx.fill();
+    });
+    if (i === 6) { // fine grooves engraved through the cream band
+      ctx.strokeStyle = 'rgba(110,61,54,0.35)';
+      ctx.lineWidth = 1.2;
+      for (let g = 0.25; g < 0.43; g += 0.012) { ctx.beginPath(); ctx.arc(cx, cy, S * g * 0.54, Math.PI, 0); ctx.stroke(); }
+    }
+  });
+  ctx.restore();
+  // Rays above the sun, in blush, thin and tapering.
+  ctx.save();
+  ctx.translate(cx + 3, cy - 2);
+  ctx.fillStyle = HOUSE.blush;
+  ctx.globalAlpha = 0.45;
+  for (let a = -Math.PI * 0.94; a < -Math.PI * 0.05; a += Math.PI / 15) {
+    ctx.save();
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(S * 0.5, -2.5);
+    ctx.lineTo(S * 0.6, -0.8);
+    ctx.lineTo(S * 0.6, 0.8);
+    ctx.lineTo(S * 0.5, 2.5);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+  // The horizon rule.
+  ctx.fillStyle = HOUSE.cream;
+  ctx.fillRect(70, S * 0.9, S - 140, 3);
+
+  // Type, in cream.
+  ctx.fillStyle = HOUSE.cream;
+  ctx.textAlign = 'left';
+  ctx.font = `italic 58px ${SERIF}`;
+  ctx.fillText('Needledrop', 70, 122);
+  ctx.font = `600 15px ${SANS}`;
+  ctx.letterSpacing = '5px';
+  ctx.fillText('HIGH FIDELITY  ·  LONG PLAYING', 72, 158);
+  // Stereo badge, top right.
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = HOUSE.cream;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(S - 230, 82, 160, 64, 32);
+  ctx.stroke();
+  ctx.font = `700 22px ${SANS}`;
+  ctx.letterSpacing = '6px';
+  ctx.fillText('STEREO', S - 147, 123);
+  ctx.letterSpacing = '0px';
+  // Title and artist, set large over the sun.
+  ctx.textAlign = 'left';
+  ctx.font = `600 64px ${SERIF}`;
+  ctx.fillText(clip(ctx, track?.title || 'Long Playing Record', S - 140), 70, 300);
+  ctx.font = `italic 40px ${SERIF}`;
+  ctx.globalAlpha = 0.85;
+  ctx.fillText(clip(ctx, track?.artist || 'Side A · Side B', S - 140), 72, 356);
+  ctx.globalAlpha = 1;
+  // Catalogue line under the horizon.
+  ctx.font = `600 15px ${SANS}`;
+  ctx.letterSpacing = '4px';
+  ctx.fillText('ND · 3301', 72, S * 0.9 + 44);
+  ctx.textAlign = 'right';
+  ctx.fillText('33⅓ RPM', S - 70, S * 0.9 + 44);
+  ctx.letterSpacing = '0px';
+
+  // Ink speckle: tiny gaps where the ink didn't take, over everything printed.
+  for (let i = 0; i < 1400; i++) {
+    ctx.fillStyle = `rgba(110,61,54,${0.2 + rand() * 0.3})`;
+    const r = 0.5 + rand() * 0.9;
+    ctx.beginPath();
+    ctx.arc(rand() * S, rand() * S, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Linen emboss for the jacket board: a fine woven cross-hatch, as a bump map.
+export function makeBoardBump() {
+  const S = 512;
+  const [c, ctx] = canvas(S);
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, S, S);
+  const rand = rng(17);
+  for (let y = 0; y < S; y += 3) {
+    ctx.fillStyle = `rgba(255,255,255,${0.12 + rand() * 0.12})`;
+    ctx.fillRect(0, y, S, 1.2);
+  }
+  for (let x = 0; x < S; x += 3) {
+    ctx.fillStyle = `rgba(0,0,0,${0.1 + rand() * 0.12})`;
+    ctx.fillRect(x, 0, 1.2, S);
+  }
+  for (let i = 0; i < 1800; i++) { // slubs in the weave
+    ctx.fillStyle = rand() > 0.5 ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)';
+    ctx.fillRect(rand() * S, rand() * S, 4 + rand() * 10, 1.5);
+  }
+  const t = tex(c, false);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(3, 3);
+  return t;
+}
+
+// The paper inner sleeve: off-white stock with fibres, slightly foxed at the edge.
+export function makeInnerSleeveTexture() {
+  const S = 512;
+  const [c, ctx] = canvas(S);
+  ctx.fillStyle = '#e9dfcf';
+  ctx.fillRect(0, 0, S, S);
+  const rand = rng(23);
+  for (let i = 0; i < 2500; i++) {
+    ctx.strokeStyle = rand() > 0.5 ? 'rgba(255,255,255,0.18)' : 'rgba(120,96,70,0.12)';
+    ctx.lineWidth = 0.6;
+    const x = rand() * S, y = rand() * S, a = rand() * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(a) * (3 + rand() * 9), y + Math.sin(a) * (3 + rand() * 9));
+    ctx.stroke();
+  }
+  const fox = ctx.createRadialGradient(S / 2, S / 2, S * 0.3, S / 2, S / 2, S * 0.75);
+  fox.addColorStop(0, 'rgba(150,110,60,0)');
+  fox.addColorStop(1, 'rgba(150,110,60,0.16)');
+  ctx.fillStyle = fox;
+  ctx.fillRect(0, 0, S, S);
+  return tex(c);
+}
+
 export function makeSleeveTexture({ img, track }) {
   const S = 1024;
   const [c, ctx] = canvas(S);
   if (img) {
     drawCover(ctx, img, 0, 0, S, S);
   } else {
-    ctx.fillStyle = '#b89870';
-    ctx.fillRect(0, 0, S, S);
-    const rand = rng(11);
-    ctx.globalAlpha = 0.08;
-    for (let i = 0; i < 3000; i++) {
-      ctx.fillStyle = rand() > 0.5 ? '#fff' : '#5a3e1e';
-      ctx.fillRect(rand() * S, rand() * S, 2 + rand() * 3, 1);
-    }
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#2a1d10';
-    ctx.textAlign = 'left';
-    ctx.font = `italic 64px ${SERIF}`;
-    ctx.fillText('Needledrop', 70, 140);
-    ctx.font = `600 54px ${SERIF}`;
-    ctx.fillText(clip(ctx, track?.title || 'Long Playing Record', S - 140), 70, S - 170);
-    ctx.font = `40px ${SERIF}`;
-    ctx.fillText(clip(ctx, track?.artist || '33⅓ RPM · Stereo', S - 140), 70, S - 110);
+    drawHouseSleeve(ctx, S, track);
   }
   // Ring wear from the record inside.
   ctx.save();
