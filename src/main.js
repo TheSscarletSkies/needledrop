@@ -196,6 +196,8 @@ let polling = false;
 let currentTrackId = null;
 let currentAlbum = null;
 let panelOpen = false;
+// With nothing on the platter the source panel opens by itself, as a hint; once dismissed it stays shut.
+let panelDismissed = false;
 
 // Playback-rate factor the deck applies to sources that can follow it.
 const speedFactor = () => (settings.rpm > 40 ? 45 / 33.333 : 1) * (1 + settings.pitch);
@@ -275,6 +277,7 @@ function switchSource(name, { open = true } = {}) {
   save();
   pendingPlay = false;
   panelOpen = open;
+  panelDismissed = false; // a new source gets its hint back
   document.body.classList.remove('src-system', 'src-youtube', 'src-local');
   document.body.classList.add(`src-${name}`);
   $('#settings').hidden = true;
@@ -286,9 +289,16 @@ function switchSource(name, { open = true } = {}) {
 }
 
 // Source panel shows when there's nothing to play, or when asked for (tab or sleeve click).
+const panelShown = () => (panelOpen || (!snap.track && !panelDismissed)) && $('#settings').hidden;
+function closePanels() {
+  panelOpen = false;
+  panelDismissed = true;
+  $('#settings').hidden = true;
+  renderPanels();
+}
 function renderPanels() {
   document.querySelectorAll('.sources button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.source === source.name)));
-  const show = (panelOpen || !snap.track) && $('#settings').hidden;
+  const show = panelShown();
   document.querySelectorAll('.panel').forEach((p) => { p.hidden = !show || p.id !== `panel-${source.name}`; });
 }
 
@@ -346,17 +356,18 @@ addEventListener('keydown', (e) => {
   if (e.code === 'ArrowLeft') seekTo(position() - 10);
   if (e.key === 'n') source.next();
   if (e.key === 'p') source.prev();
-  if (e.key === 'Escape') { panelOpen = false; $('#settings').hidden = true; renderPanels(); }
+  if (e.key === 'Escape') closePanels();
   if (e.code === 'ArrowUp') { e.preventDefault(); setVolume(settings.volume + 0.05); }
   if (e.key === 'm') toggleMute();
   if (e.code === 'ArrowDown') { e.preventDefault(); setVolume(settings.volume - 0.05); }
 });
 
-// Clicking anywhere outside Settings (or an open source panel) closes it.
+// Clicking anywhere outside Settings or a source panel closes it (the 3D scene handles its own clicks).
 addEventListener('pointerdown', (e) => {
   const t = e.target;
-  if (!$('#settings').hidden && !t.closest?.('#settings, #settings-btn')) { $('#settings').hidden = true; renderPanels(); }
-  if (panelOpen && snap.track && t !== canvas && !t.closest?.('.panel, .sources')) { panelOpen = false; renderPanels(); }
+  if (t === canvas) return;
+  if (!$('#settings').hidden && !t.closest?.('#settings, #settings-btn')) closePanels();
+  if (panelShown() && !t.closest?.('.panel, .sources')) closePanels();
 });
 
 // ---------- seek bar: the hairline under the now-playing bar ----------
@@ -470,10 +481,9 @@ addEventListener('pointerdown', (e) => {
   wake();
   setPointer(e);
   const hit = deck.pick(ray) || pickVideo() || pickCat();
-  if (!hit) {
-    if (panelOpen && snap.track) { panelOpen = false; renderPanels(); }
-    return;
-  }
+  // Any click in the scene closes open panels, except the sleeve, which opens the record panel.
+  if (hit !== 'sleeve' && (panelShown() || !$('#settings').hidden)) closePanels();
+  if (!hit) return;
   controls.enabled = false;
   switch (hit) {
     case 'arm':
@@ -571,13 +581,19 @@ function placeCoach() {
 
 // ---------- panels ----------
 document.querySelectorAll('.sources button').forEach((b) => b.addEventListener('click', () => {
-  if (b.dataset.source === source.name) { panelOpen = !panelOpen; $('#settings').hidden = true; renderPanels(); }
+  if (b.dataset.source === source.name) {
+    const was = panelShown();
+    panelOpen = !was;
+    panelDismissed = was;
+    $('#settings').hidden = true;
+    renderPanels();
+  }
   else switchSource(b.dataset.source);
 }));
 $('#settings-btn').addEventListener('click', () => {
   const s = $('#settings');
   s.hidden = !s.hidden;
-  if (!s.hidden) panelOpen = false;
+  if (!s.hidden) { panelOpen = false; panelDismissed = true; }
   renderPanels();
 });
 
