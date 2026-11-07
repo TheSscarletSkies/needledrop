@@ -34,7 +34,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', settingsTab: 'deck', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, weather: 'breeze', rainSound: false, time: 'auto', settingsTab: 'deck', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -737,11 +737,6 @@ function hexRow(row, onChange) {
 const isCustomFinish = (v) => !FINISHES[v];
 const showFinishHex = hexRow($('#finish-custom'), (hex) => setFinish(`${hex}${$('#finish-wood').checked ? ':wood' : ''}`));
 $('#finish-wood').addEventListener('change', (e) => setFinish(`${settings.customFinish.split(':')[0]}${e.target.checked ? ':wood' : ''}`));
-// Light rooms get a mid-tone linen and a touch less exposure, so pale finishes and black vinyl keep their contrast.
-const THEMES = {
-  dark: { bg: 0x16120f, table: '#2b2521', exposure: 1.0 },
-  light: { bg: 0xd2c9bd, table: '#a39a8e', exposure: 0.8 }, // neutral greige, darker than the pale decks
-};
 // The finish only changes the turntable (and the speakers, which share its veneer).
 function setFinish(name) {
   const custom = isCustomFinish(name);
@@ -761,25 +756,19 @@ function setFinish(name) {
   }
 }
 
-// The room is its own choice: warm evening light (default) or a bright daylight room.
-function setRoom(name) {
-  settings.room = name === 'daylight' ? 'daylight' : 'evening';
-  save();
-  const t = settings.room === 'daylight' ? 'light' : 'dark';
-  const theme = THEMES[t];
-  document.body.classList.toggle('light', t === 'light');
-  scene.background = new THREE.Color(theme.bg);
-  scene.fog.color.set(theme.bg);
-  renderer.toneMappingExposure = theme.exposure;
-  room.setTheme(t);
+// One room: a dark sideboard against a warm plaster wall. Brightness and mood come from Time of day,
+// and the wall can be any colour.
+function setupRoom() {
+  const bg = 0x16120f;
+  scene.background = new THREE.Color(bg);
+  scene.fog.color.set(bg);
+  renderer.toneMappingExposure = 1.0;
+  room.setTheme('dark');
   tableMat.map?.dispose();
-  tableMat.map = makeTableTexture(theme.table);
+  tableMat.map = makeTableTexture('#2b2521');
   tableMat.needsUpdate = true;
-  document.querySelectorAll('#room-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.room === settings.room)));
   room.setWallColor(settings.wallHex);
-  showWallHex(settings.wallHex || wallDefault());
 }
-document.querySelectorAll('#room-mode button').forEach((b) => b.addEventListener('click', () => setRoom(b.dataset.room)));
 
 // Time of day: moves the sun at the window and changes the lamp in the room. Auto follows the clock.
 const KEY_BY_TIME = {
@@ -844,7 +833,7 @@ const showVinylHex = hexRow($('#vinyl-custom'), (hex) => {
 // Wall colour: any hex, or Reset to the room's own.
 const showWallHex = hexRow($('#wall-custom'), (hex) => { settings.wallHex = hex; save(); room.setWallColor(hex); });
 $('#wall-reset').addEventListener('click', () => { settings.wallHex = null; save(); room.setWallColor(null); showWallHex(wallDefault()); });
-const wallDefault = () => (settings.room === 'daylight' ? ROOM_THEMES.light.wall : ROOM_THEMES.dark.wall);
+const wallDefault = () => ROOM_THEMES.dark.wall;
 document.querySelectorAll('#vinyl-mode button').forEach((b) => b.addEventListener('click', () => setVinylMode(b.dataset.v)));
 $('#speakers').checked = settings.speakers;
 speakers.visible = settings.speakers;
@@ -900,7 +889,7 @@ function broadcastToWidgets(progress, wantsPlay, mode) {
 }
 
 setFinish(settings.finish);
-setRoom(settings.room);
+setupRoom();
 setTime(settings.time);
 showWallHex(settings.wallHex || wallDefault());
 setWeather(settings.weather);

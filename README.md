@@ -27,7 +27,7 @@ Every part of the deck either works or is there because a real direct-drive turn
   - **Now-playing strip:** a small spinning record with the title and transport, in frosted glass tinted from the album art.
   - Both float on top by default, or can sit with your other windows.
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
-- **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows. Pick an evening or a daylight room in Settings; the deck finish never changes the room.
+- **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows.
 - **Weather outside the window:** a branch swaying in the breeze, rain gathering and running down the glass (with an optional, synthesised rain sound), or snow drifting through the sunbeam, all as moving light and shadow. Choose **Still** for a static window that uses no extra battery.
 - **Time of day:** morning, day, golden hour or night (a warm lamp and moonlight at the window), or **Auto** to follow your clock.
 - **Your colours:** any hex colour for the deck (smooth lacquer or stained wood grain), the record, and the wall.

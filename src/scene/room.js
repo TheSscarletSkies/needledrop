@@ -49,7 +49,6 @@ function plasterTexture(color) {
 
 export const ROOM_THEMES = {
   dark: { wall: '#3a2a21', windowColor: 0xffd2a3, windowIntensity: 240000 },
-  light: { wall: '#dcd4c9', windowColor: 0xffe7cc, windowIntensity: 60000 },
 };
 
 // Where the sun is and what colour its light is, through the day. The window light moves with it:
