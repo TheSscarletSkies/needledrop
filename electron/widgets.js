@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const KINDS = {
-  deck: { w: 440, h: 352, page: 'deck.html', resizable: true, min: [260, 208], max: [1200, 960] },
+  deck: { w: 320, h: 372, page: 'deck.html', resizable: true, min: [260, 302], max: [640, 744] },
   strip: { w: 360, h: 104, page: 'widget.html?kind=strip', resizable: false },
 };
 
@@ -23,6 +23,8 @@ export class Widgets {
     // v2: widgets sit on the desktop behind other windows by default, like macOS widgets. Earlier
     // versions saved "on top" as the default, so reset it once for everyone.
     if (this.prefs.v !== 2) { this.prefs.onTop = false; this.prefs.v = 2; this.#save(); }
+    // v3: the turntable widget became a box with a player; sizes saved for the old shape don't fit.
+    if (this.prefs.v !== 3) { delete this.prefs.size.deck; this.prefs.v = 3; this.#save(); }
   }
 
   #save() { fs.writeFile(this.file, JSON.stringify(this.prefs), () => {}); }
@@ -72,12 +74,10 @@ export class Widgets {
     const { w, h } = this.#size(kind);
     const { x, y } = this.#position(kind);
     const mac = process.platform === 'darwin';
-    // The deck floats on the desktop with only its own shadow; the strip is a frosted-glass card.
-    const look = kind === 'deck'
-      ? { transparent: true, backgroundColor: '#00000000', hasShadow: false }
-      : mac
-        ? { vibrancy: 'hud', visualEffectState: 'active', backgroundColor: '#00000000', hasShadow: true }
-        : { transparent: true, backgroundColor: '#00000000', hasShadow: true };
+    // Both are frosted-glass boxes: native vibrancy on macOS, painted glass elsewhere.
+    const look = mac
+      ? { vibrancy: 'hud', visualEffectState: 'active', backgroundColor: '#00000000', hasShadow: true, roundedCorners: true }
+      : { transparent: true, backgroundColor: '#00000000', hasShadow: true };
     const win = new BrowserWindow({
       width: w, height: h, x, y,
       frame: false, resizable: k.resizable, maximizable: false, minimizable: false, fullscreenable: false,

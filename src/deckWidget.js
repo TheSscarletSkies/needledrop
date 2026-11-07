@@ -7,6 +7,7 @@ import { Turntable, TABLE_Y } from './scene/turntable.js';
 import { loadImage } from './scene/textures.js';
 
 const api = window.needledrop;
+document.body.classList.add(`os-${navigator.platform.toLowerCase().includes('mac') ? 'mac' : 'other'}`);
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setClearColor(0x000000, 0);
@@ -33,7 +34,7 @@ fill.position.set(40, 25, -10);
 scene.add(fill);
 
 // Only the deck's own soft shadow lands on the desktop.
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.28 }));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.16 }));
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = TABLE_Y;
 ground.receiveShadow = true;
@@ -53,7 +54,7 @@ camera.position.set(0.9, 150, 1.1); // nudged toward the shadow so it isn't clip
 camera.up.set(0, 0, -1); // the back of the deck at the top of the window
 camera.lookAt(0.9, 0, 1.1);
 function fit() {
-  const w = innerWidth, h = innerHeight;
+  const w = canvas.clientWidth, h = canvas.clientHeight; // the deck's area above the player
   if (w < 2 || h < 2) return;
   renderer.setSize(w, h, false);
   let hw = 23 + 3.2, hh = 18 + 3.6;
@@ -64,6 +65,7 @@ function fit() {
 }
 let dirty = true;
 addEventListener('resize', fit);
+new ResizeObserver(fit).observe(canvas);
 fit();
 
 // ---- state from the main window ----
@@ -85,6 +87,24 @@ api?.onWidgetState(async (s) => {
 });
 deck.setRecord({ img: null, vinyl: new THREE.Color(0x0c0c0c), track: null }, false);
 
+// ---- the player under the deck ----
+const $ = (id) => document.getElementById(id);
+function showPlayer(s) {
+  $('title').textContent = s.title || 'Nothing playing';
+  $('artist').textContent = s.artist || (s.title ? '' : 'Pick something in Needledrop');
+  $('pp').setAttribute('d', s.playing ? 'M7 5h3.5v14H7zM13.5 5H17v14h-3.5z' : 'M8 5v14l11-7z');
+  $('bar').style.transform = `scaleX(${Math.min(1, s.progress || 0)})`;
+  $('seek').setAttribute('aria-valuenow', String(Math.round((s.progress || 0) * 100)));
+  document.body.style.setProperty('--tint', s.tint || 'transparent');
+}
+api?.onWidgetState(showPlayer);
+document.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', () => send(b.dataset.cmd)));
+$('seek').addEventListener('click', (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  send('seek', Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+});
+if (import.meta.env.DEV) window.__setWidgetState = showPlayer; // preview without Electron
+
 const send = (cmd, arg) => api?.widgetCommand(cmd, arg);
 deck.on('drop', (p) => send('seek', p));
 deck.on('rest', () => send('pause'));
@@ -97,7 +117,8 @@ const pitchPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.8);
 const dragging = { arm: false, pitch: false, window: null };
 
 function setPointer(e) {
-  ptr.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
 }
 
@@ -140,18 +161,6 @@ canvas.addEventListener('pointerup', () => {
 canvas.addEventListener('dblclick', (e) => { setPointer(e); if (!deck.pick(ray)) send('open'); });
 document.getElementById('close').addEventListener('click', () => send('close'));
 
-// The × sits just off the plinth's back-right corner, not in the window's empty corner.
-const closeBtn = document.getElementById('close');
-const corner = new THREE.Vector3();
-let closeAt = '';
-function placeClose() {
-  corner.set(23, 0.2, -18).project(camera); // plinth: 46 wide, 36 deep, top at y = 0
-  const x = Math.min(innerWidth - 26, Math.max(4, (corner.x * 0.5 + 0.5) * innerWidth - 4));
-  const y = Math.min(innerHeight - 26, Math.max(4, (-corner.y * 0.5 + 0.5) * innerHeight - 26));
-  const at = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-  if (at !== closeAt) closeBtn.style.transform = closeAt = at;
-}
-
 // ---- loop: full rate while anything moves, idle otherwise ----
 const timer = new THREE.Timer();
 let still = 0;
@@ -162,6 +171,6 @@ renderer.setAnimationLoop(() => {
   deck.update(dt, { mode: state.mode, progress: state.progress, spinning: state.spinning });
   const moving = state.spinning || deck.spin > 0.01 || Math.abs(deck.theta + deck.lift - before) > 1e-5 || deck.recordDrop > 0 || dragging.arm || deck.pressed.size;
   still = moving || dirty ? 0 : still + 1;
-  if (still < 2) { renderer.render(scene, camera); placeClose(); }
+  if (still < 2) renderer.render(scene, camera);
   dirty = false;
 });
