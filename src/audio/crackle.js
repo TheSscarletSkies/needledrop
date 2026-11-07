@@ -129,40 +129,6 @@ export class Vinyl {
     this.rain.gain.setTargetAtTime(level * 0.5, this.ctx.currentTime, 0.6);
   }
 
-  // A cat's purr: low rumbling noise pulsed ~26 times a second, swelling on each breath.
-  purr(seconds = 4, level = 1) {
-    if (!this.#ensure()) return;
-    const ctx = this.ctx, t = ctx.currentTime;
-    const n = ctx.createBufferSource();
-    n.buffer = this.crackleBuf;
-    n.loop = true;
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 260;
-    const pulse = ctx.createGain();
-    pulse.gain.value = 0.5;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 26;
-    const lfoAmt = ctx.createGain();
-    lfoAmt.gain.value = 0.5;
-    lfo.connect(lfoAmt).connect(pulse.gain);
-    const env = ctx.createGain();
-    env.gain.setValueAtTime(0.0001, t);
-    const breaths = Math.max(1, Math.round(seconds / 1.6));
-    for (let i = 0; i < breaths; i++) { // in-breath louder than out-breath
-      const s = t + i * 1.6;
-      env.gain.linearRampToValueAtTime(5.5 * level, s + 0.25);
-      env.gain.linearRampToValueAtTime(3.0 * level, s + 0.8);
-      env.gain.linearRampToValueAtTime(4.2 * level, s + 1.05);
-      env.gain.linearRampToValueAtTime(0.6 * level, s + 1.55);
-    }
-    env.gain.linearRampToValueAtTime(0.0001, t + breaths * 1.6 + 0.2);
-    n.connect(lp).connect(pulse).connect(env).connect(ctx.destination);
-    const end = t + breaths * 1.6 + 0.3;
-    n.start(t, Math.random() * 4); lfo.start(t);
-    n.stop(end); lfo.stop(end);
-  }
-
   drop() { this.#burst(0.25, 900, 2.2); }
   lift() { this.#burst(0.08, 2500, 0.6); }
 }

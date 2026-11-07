@@ -31,7 +31,6 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Weather outside the window:** a branch swaying in the breeze, rain gathering and running down the glass (with an optional, synthesised rain sound), or snow drifting through the sunbeam, all as moving light and shadow. Choose **Still** for a static window that uses no extra battery.
 - **Time of day:** morning, day, golden hour or night (a warm lamp and moonlight at the window), or **Auto** to follow your clock.
 - **Your colours:** any hex colour for the deck (smooth lacquer or stained wood grain), the record, and the wall.
-- **A sleeping cat** on the sideboard, curled nose-to-tail in real-looking fur: ginger, grey, black, calico or cream. It breathes, twitches an ear now and then, and purrs if you pet it. Turn it off under *On the sideboard*.
 - **Five finishes:** walnut, light oak, matte black, chalk white and blush.
 - **Opens your audio files:** double-click an MP3, M4A, FLAC, WAV, OGG, AIFF or Opus file, use *Open With*, or drop files on the Dock icon, and it goes straight onto the platter. To make Needledrop the default for a file type on macOS, select a file in Finder, choose **File → Get Info → Open with → Needledrop**, then **Change All…**.
 - **Folders:** drop a folder of songs (subfolders too), use *Add folder*, or open one from Finder. Songs queue in track order (01, 2, 10) and the first one starts. In the desktop app only the playing song is held in memory.
@@ -138,7 +137,6 @@ src/
   scene/textures.js   procedural grooves, label, wood grain, strobe, sleeve, lid surface
   scene/room.js       wall and window light
   scene/weather.js    breeze, rain and snow in the window light
-  scene/cat.js        the sleeping cat (shell-rendered fur)
   scene/speakers.js   bookshelf speakers
   scene/videoStand.js tablet stand for YouTube video
   widget.js           the desktop widgets (2D canvas)

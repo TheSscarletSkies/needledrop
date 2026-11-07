@@ -241,9 +241,6 @@ body.desktop .web-only { display: none; }
 }
 .swatches button[aria-pressed='true'] { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--bg), 0 0 0 3.5px var(--ink); }
 .swatches .custom-swatch { background: conic-gradient(#d65a4a, #e0b04a, #7fb069, #4a8fd6, #9b6ad6, #d65a4a); }
-.coats { margin: 8px 0 2px 26px; gap: 8px; }
-.coats button { width: 20px; height: 20px; }
-.coats[hidden] { display: none; }
 .hexrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .hexrow[hidden] { display: none; }
 .hexrow .check { margin-top: 0; font-size: 12px; }

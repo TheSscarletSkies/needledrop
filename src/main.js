@@ -13,7 +13,6 @@ import { Turntable, TABLE_Y } from './scene/turntable.js';
 import { VideoStand } from './scene/videoStand.js';
 import { Room, ROOM_THEMES, timeNow } from './scene/room.js';
 import { WEATHERS } from './scene/weather.js';
-import { Cat, COATS } from './scene/cat.js';
 import { FINISHES, HEX, loadImage, dominantColor, makeTableTexture } from './scene/textures.js';
 import { SystemSource } from './sources/system.js';
 import { YouTubeSource } from './sources/youtube.js';
@@ -35,7 +34,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', settingsTab: 'deck', cat: true, catCoat: 'ginger', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', settingsTab: 'deck', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -99,7 +98,6 @@ const deck = new Turntable(scene);
 const speakers = new Speakers(scene, TABLE_Y, deck.mat.wood);
 const levels = new Levels();
 const stand = new VideoStand(scene, $('#yt-screen'), TABLE_Y);
-const cat = new Cat(scene, TABLE_Y);
 
 // ---------- post: ambient occlusion for contact shadows, bloom so LEDs glow ----------
 const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
@@ -480,7 +478,7 @@ addEventListener('pointerdown', (e) => {
   if (e.target !== canvas) return;
   wake();
   setPointer(e);
-  const hit = deck.pick(ray) || pickVideo() || pickCat();
+  const hit = deck.pick(ray) || pickVideo();
   // Any click in the scene closes open panels, except the sleeve, which opens the record panel.
   if (hit !== 'sleeve' && (panelShown() || !$('#settings').hidden)) closePanels();
   if (!hit) return;
@@ -504,7 +502,6 @@ addEventListener('pointerdown', (e) => {
     case 'cover': deck.toggleCover(); break;
     case 'sleeve': panelOpen = true; $('#settings').hidden = true; renderPanels(); break;
     case 'video': toggle(); break;
-    case 'cat': cat.pet(); vinyl.unlock(); vinyl.purr(4.5, settings.volume); break;
   }
   canvas.className = drag ? 'grabbing' : '';
   showTip(null);
@@ -515,7 +512,7 @@ canvas.addEventListener('pointermove', (e) => {
   const p = new THREE.Vector3();
   if (drag === 'arm') { if (ray.ray.intersectPlane(armPlane, p)) deck.dragTo(p); return; }
   if (drag === 'pitch') { if (ray.ray.intersectPlane(pitchPlane, p)) setPitch(deck.pitchFromPoint(p)); return; }
-  const hit = deck.pick(ray) || pickVideo() || pickCat();
+  const hit = deck.pick(ray) || pickVideo();
   canvas.className = hit === 'arm' || hit === 'pitch' ? 'grab' : hit ? 'pointer' : '';
   showTip(hit, e);
 });
@@ -532,11 +529,7 @@ const TIPS = {
   cover: 'Dust cover: click to open or close',
   sleeve: 'Album sleeve: change the record',
   video: 'Click to play or pause',
-  cat: 'Pet the cat',
 };
-function pickCat() {
-  return cat.group.visible && cat.pickables && ray.intersectObjects(cat.pickables, false).length ? 'cat' : null;
-}
 // The video tablet, when it's out.
 function pickVideo() {
   return stand.group.visible && ray.intersectObjects(stand.pickables, false).length ? 'video' : null;
@@ -861,29 +854,6 @@ const setSleeve = (on) => { deck.sleeve.visible = on; deck.sleevePickables.forEa
 $('#sleeve').checked = settings.sleeve;
 setSleeve(settings.sleeve);
 $('#sleeve').addEventListener('change', (e) => { settings.sleeve = e.target.checked; setSleeve(e.target.checked); save(); });
-// The cat, and its coat.
-const coats = $('#coats');
-for (const [name, c] of Object.entries(COATS)) {
-  const b = document.createElement('button');
-  b.title = c.label;
-  b.setAttribute('aria-label', c.label);
-  b.style.background = c.pattern === 'calico' ? `conic-gradient(${c.base} 0 40%, ${c.light} 0 70%, ${c.stripe} 0)` : c.base;
-  b.dataset.coat = name;
-  b.addEventListener('click', () => setCat(true, name));
-  coats.appendChild(b);
-}
-function setCat(on, coat = settings.catCoat) {
-  settings.cat = on;
-  settings.catCoat = COATS[coat] ? coat : 'ginger';
-  save();
-  cat.group.visible = on;
-  if (on) cat.setCoat(settings.catCoat);
-  $('#cat').checked = on;
-  coats.hidden = !on;
-  coats.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.coat === settings.catCoat)));
-}
-$('#cat').addEventListener('change', (e) => setCat(e.target.checked));
-setCat(settings.cat);
 $('#crackle').value = settings.crackle;
 $('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle * settings.volume); save(); });
 $('#pin').addEventListener('change', (e) => window.needledrop?.pin(e.target.checked));
@@ -991,7 +961,6 @@ function frame(fixedDt) {
   }
   if (!Number.isFinite(camera.position.lengthSq())) { frameCamera.done = false; frameCamera(); }
   stand.update(dt, settings.showVideo && source === sources.youtube && !!snap.track);
-  cat.setSpot(stand.group.visible);
   controls.update();
   const camDist = camera.position.distanceTo(controls.target);
   scene.fog.near = camDist + 45;
@@ -1002,7 +971,7 @@ function frame(fixedDt) {
   const sig = [deck.theta, deck.lift, deck.spin, deck.coverT, deck.recordDrop, deck.pressed.size, stand.t, levels.bass,
     camera.position.x, camera.position.y, camera.position.z, settings.pitch, settings.rpm].map((v) => v.toFixed(4)).join();
   // A turning platter is always motion, even when the arm creeps too slowly to register.
-  const weatherMoved = room.update(dt) | cat.update(dt); // both ~15×/s, so idle frames render at that rate, not 60
+  const weatherMoved = room.update(dt); // redraws ~15×/s, so idle frames render at that rate, not 60
   const active = fixedDt !== undefined || deck.spin > 0.001 || sig !== lastSig || viewTween || drag || weatherMoved;
   lastSig = sig;
   idleFrames = active ? 0 : idleFrames + 1;
@@ -1039,4 +1008,4 @@ function cutVideoHole() {
 }
 renderer.setAnimationLoop(() => frame());
 
-if (import.meta.env.DEV) window.__nd = { cat, room, frame, levels, speakers, stand, renderer, scene, camera, controls, deck, snap, sources, settings };
+if (import.meta.env.DEV) window.__nd = { room, frame, levels, speakers, stand, renderer, scene, camera, controls, deck, snap, sources, settings };
