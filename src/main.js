@@ -65,8 +65,8 @@ controls.minPolarAngle = 0.08;
 controls.maxPolarAngle = 1.22;
 controls.minDistance = 35;
 controls.maxDistance = 170;
-// Aim a little above the plinth so the speakers and the open lid have headroom at the top.
-controls.target.set(0, 2, -1);
+// Aim well above the plinth: the open lid then sits clear of the top edge and the deck isn't perched high.
+controls.target.set(0, 8, -3); // halfway up the open lid, so deck and lid sit centred with headroom
 
 // Warm key from the upper left, like a lamp or window: a soft-edged pool of light that falls off
 // across the table, so the deck is lit and the room around it isn't.
