@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import {
   RECORD, FINISHES, makeRecordTextures, makeWoodTexture, makeStrobeRow, makeScaleRing, makeLegend,
-  makeSleeveTexture, makeBoardBump, makeInnerSleeveTexture, turnedMetalAnisotropy, makeLidSurface,
+  makeSleeveTexture, finishFor, makeBoardBump, makeInnerSleeveTexture, turnedMetalAnisotropy, makeLidSurface,
 } from './textures.js';
 
 const PLINTH = { w: 46, d: 36, h: 7 };
@@ -427,11 +427,11 @@ export class Turntable {
     this.root.add(head);
     const tHood = this.#mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.1, 24), black, head);
     tHood.rotation.z = Math.PI / 2;
-    this.targetLens = new THREE.MeshStandardMaterial({ color: 0x332a1e, emissive: 0xfff0d2, emissiveIntensity: 9 });
+    this.targetLens = new THREE.MeshStandardMaterial({ color: 0x332a1e, emissive: 0xfff0d2, emissiveIntensity: 3.2 });
     const tLens = this.#mesh(new THREE.CircleGeometry(0.4, 24), this.targetLens, head, { cast: false });
     tLens.position.x = 0.56;
     tLens.rotation.y = Math.PI / 2;
-    this.targetLight = new THREE.SpotLight(0xffecc8, 2600, 30, 0.3, 0.7, 2);
+    this.targetLight = new THREE.SpotLight(0xffecc8, 1300, 30, 0.3, 0.8, 2);
     this.targetLight.position.set(tl.x + Math.cos(toAim) * 0.6, 2.0, tl.z + Math.sin(toAim) * 0.6);
     this.targetLight.target.position.copy(aim);
     this.root.add(this.targetLight, this.targetLight.target);
@@ -583,7 +583,7 @@ export class Turntable {
 
   // ---------------- public API ----------------
   setFinish(name) {
-    const f = FINISHES[name] || FINISHES.walnut;
+    const f = finishFor(name);
     this.finish = name;
     this.mat.wood.map?.dispose();
     this.mat.wood.map = makeWoodTexture(f);
@@ -676,11 +676,12 @@ export class Turntable {
 
     // Lights
     const on33 = this.rpm < 40;
-    this.led33.emissiveIntensity = on33 ? 7 : 0;
-    this.led45.emissiveIntensity = on33 ? 0 : 7;
-    this.ledPitch.emissiveIntensity = this.pitch === 0 ? 6 : 0;
-    this.lampLens.emissiveIntensity = 6;
-    this.lampLight.intensity = 60;
+    // Small indicator lamps: lit, but soft, the way they look in a lit room rather than a dark one.
+    this.led33.emissiveIntensity = on33 ? 2.6 : 0;
+    this.led45.emissiveIntensity = on33 ? 0 : 2.6;
+    this.ledPitch.emissiveIntensity = this.pitch === 0 ? 2.2 : 0;
+    this.lampLens.emissiveIntensity = 2.4;
+    this.lampLight.intensity = 30;
 
     // Button travel
     for (const [name, t] of this.pressed) {

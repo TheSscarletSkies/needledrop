@@ -313,6 +313,28 @@ export const FINISHES = {
   blush:  { label: 'Blush', base: '#dcaa9f', grain: null, metal: '#d6c0b6', felt: '#efd9d2', ink: '#6b3f37', lacquer: 0.3, roughness: 0.5, theme: 'light' },
 };
 
+// A finish from any colour. The value is '#rrggbb' for a smooth lacquered deck, or '#rrggbb:wood'
+// for veneer stained that colour (grain drawn in a darker shade of it). Ink, felt and trim are
+// chosen to read against it.
+export const HEX = /^#[0-9a-f]{6}$/i;
+export function finishFor(value) {
+  if (FINISHES[value]) return FINISHES[value];
+  const [hex, kind] = String(value || '').split(':');
+  if (!HEX.test(hex)) return FINISHES.walnut;
+  const c = new THREE.Color(hex);
+  const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b; // linear
+  const light = lum > 0.22;
+  const grain = kind === 'wood' ? `#${c.clone().multiplyScalar(0.45).getHexString()}` : null;
+  return {
+    label: kind === 'wood' ? 'Custom stain' : 'Custom', base: hex, grain,
+    metal: light ? '#cfc9c1' : '#c9c4bc',
+    felt: lum > 0.5 ? '#3a3836' : '#232323',
+    ink: light ? `#${c.clone().multiplyScalar(0.28).getHexString()}` : '#ece5da',
+    lacquer: kind === 'wood' ? 0.45 : 0.35, roughness: kind === 'wood' ? 0.5 : 0.45,
+    theme: light ? 'light' : 'dark',
+  };
+}
+
 export function makeWoodTexture(finish) {
   const [c, ctx] = canvas(1024);
   ctx.fillStyle = finish.base;

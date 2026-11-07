@@ -52,6 +52,20 @@ export const ROOM_THEMES = {
   light: { wall: '#dcd4c9', windowColor: 0xffe7cc, windowIntensity: 60000 },
 };
 
+// Where the sun is and what colour its light is, through the day. The window light moves with it:
+// a high morning sun throws the panes low on the wall, golden hour stretches them up and warm.
+// At night there's only cool moonlight at the window (the lamp in the room is the key light).
+export const TIMES = {
+  morning: { color: 0xfff1de, k: 0.8, pos: [62, 112, 52], target: [6, 8] },
+  day: { color: null, k: 1, pos: [80, 70, 40], target: [4, 16] },
+  golden: { color: 0xffa25a, k: 1.3, pos: [108, 44, 30], target: [-2, 10] },
+  night: { color: 0x8ea7d8, k: 0.17, pos: [72, 92, 40], target: [4, 10] },
+};
+export function timeNow(date = new Date()) {
+  const h = date.getHours() + date.getMinutes() / 60;
+  return h >= 5.5 && h < 10 ? 'morning' : h >= 10 && h < 16.5 ? 'day' : h >= 16.5 && h < 19.5 ? 'golden' : 'night';
+}
+
 export class Room {
   constructor(scene, tableY) {
     this.wallMat = new THREE.MeshStandardMaterial({ roughness: 0.95 });
@@ -79,11 +93,24 @@ export class Room {
 
   setTheme(name) {
     const t = ROOM_THEMES[name] || ROOM_THEMES.dark;
-    this.wallMat.map?.dispose();
-    this.wallMat.map = plasterTexture(t.wall);
-    this.wallMat.needsUpdate = true;
     this.theme = t;
+    this.#paint();
     this.#applyLight();
+  }
+
+  // Paint the wall any colour (null = the room's own). The window light and plaster stay the same.
+  setWallColor(hex) {
+    this.wallColor = hex || null;
+    this.#paint();
+  }
+
+  #paint() {
+    const color = this.wallColor || this.theme?.wall;
+    if (!color || color === this.painted) return;
+    this.painted = color;
+    this.wallMat.map?.dispose();
+    this.wallMat.map = plasterTexture(color);
+    this.wallMat.needsUpdate = true;
   }
 
   setWeather(kind) {
@@ -91,9 +118,19 @@ export class Room {
     this.#applyLight();
   }
 
+  setTime(name) {
+    this.time = TIMES[name] || TIMES.day;
+    this.window.position.set(...this.time.pos);
+    this.window.target.position.set(this.time.target[0], this.time.target[1], WALL_Z);
+    this.#applyLight();
+  }
+
   #applyLight() {
     if (!this.theme) return;
-    const { color, intensity } = this.weather.light(this.theme.windowColor, this.theme.windowIntensity);
+    const time = this.time || TIMES.day;
+    const base = new THREE.Color(this.theme.windowColor);
+    if (time.color !== null) base.lerp(new THREE.Color(time.color), 0.75);
+    const { color, intensity } = this.weather.light(base, this.theme.windowIntensity * time.k);
     this.window.color.copy(color);
     this.window.intensity = intensity;
   }

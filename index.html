@@ -75,10 +75,29 @@
     <aside class="settings" id="settings" hidden>
       <h3>Finish <span id="finish-name"></span></h3>
       <div class="swatches" id="finishes"></div>
+      <div class="hexrow" id="finish-custom" hidden>
+        <input type="color" aria-label="Deck colour" />
+        <input type="text" spellcheck="false" maxlength="7" aria-label="Deck colour hex code" />
+        <label class="check"><input type="checkbox" id="finish-wood" /> Wood grain</label>
+      </div>
       <h3>Room</h3>
       <div class="seg" id="room-mode">
         <button data-room="evening">Evening</button>
         <button data-room="daylight">Daylight</button>
+      </div>
+      <div class="hexrow" id="wall-custom">
+        <span class="hexlabel">Wall</span>
+        <input type="color" aria-label="Wall colour" />
+        <input type="text" spellcheck="false" maxlength="7" aria-label="Wall colour hex code" />
+        <button class="linkish" id="wall-reset">Reset</button>
+      </div>
+      <h3>Time of day</h3>
+      <div class="seg" id="time-mode">
+        <button data-t="auto" title="Follows your clock">Auto</button>
+        <button data-t="morning">Morning</button>
+        <button data-t="day">Day</button>
+        <button data-t="golden">Golden</button>
+        <button data-t="night">Night</button>
       </div>
       <h3>Outside the window</h3>
       <div class="seg" id="weather-mode">
@@ -91,12 +110,19 @@
       <h3>Pressing</h3>
       <div class="seg" id="vinyl-mode">
         <button data-v="black">Black</button>
-        <button data-v="color">Coloured from art</button>
+        <button data-v="color">From art</button>
+        <button data-v="custom">Custom</button>
+      </div>
+      <div class="hexrow" id="vinyl-custom" hidden>
+        <input type="color" aria-label="Record colour" />
+        <input type="text" spellcheck="false" maxlength="7" aria-label="Record colour hex code" />
       </div>
       <h3>On the sideboard</h3>
       <label class="check"><input type="checkbox" id="speakers" /> Speakers</label>
       <label class="check"><input type="checkbox" id="yt-show" /> Video stand <span class="hint-inline">for YouTube</span></label>
       <label class="check"><input type="checkbox" id="sleeve" /> Album sleeve</label>
+      <label class="check"><input type="checkbox" id="cat" /> A sleeping cat</label>
+      <div class="swatches coats" id="coats"></div>
       <h3>Surface noise</h3>
       <input type="range" id="crackle" min="0" max="1" step="0.01" aria-label="Surface noise level" />
       <div class="desktop-only">

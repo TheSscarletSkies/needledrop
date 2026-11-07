@@ -11,9 +11,10 @@ import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { Turntable, TABLE_Y } from './scene/turntable.js';
 import { VideoStand } from './scene/videoStand.js';
-import { Room } from './scene/room.js';
+import { Room, ROOM_THEMES, timeNow } from './scene/room.js';
 import { WEATHERS } from './scene/weather.js';
-import { FINISHES, loadImage, dominantColor, makeTableTexture } from './scene/textures.js';
+import { Cat, COATS } from './scene/cat.js';
+import { FINISHES, HEX, loadImage, dominantColor, makeTableTexture } from './scene/textures.js';
 import { SystemSource } from './sources/system.js';
 import { YouTubeSource } from './sources/youtube.js';
 import { LocalSource } from './sources/local.js';
@@ -34,7 +35,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', cat: true, catCoat: 'ginger', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -98,6 +99,7 @@ const deck = new Turntable(scene);
 const speakers = new Speakers(scene, TABLE_Y, deck.mat.wood);
 const levels = new Levels();
 const stand = new VideoStand(scene, $('#yt-screen'), TABLE_Y);
+const cat = new Cat(scene, TABLE_Y);
 
 // ---------- post: ambient occlusion for contact shadows, bloom so LEDs glow ----------
 const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
@@ -122,7 +124,7 @@ dof.render = (...args) => {
   deck.cover.visible = true;
 };
 composer.addPass(dof);
-const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.45, 0.3, 1.6);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.18, 2.4);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -257,8 +259,8 @@ async function pressRecord(track, animate = true) {
   lastArt = { img, track };
   widgetLook.tint = img ? `#${dominantColor(img).getHexString()}` : null;
   widgetLook.art = img ? squareArt(img) : null;
-  const color = settings.vinyl === 'color' && img
-    ? dominantColor(img).lerp(new THREE.Color(0x0a0a0a), 0.12)
+  const color = settings.vinyl === 'custom' ? new THREE.Color(settings.vinylHex)
+    : settings.vinyl === 'color' && img ? dominantColor(img).lerp(new THREE.Color(0x0a0a0a), 0.12)
     : new THREE.Color(0x0c0c0c);
   deck.setRecord({ img, vinyl: color, track }, animate);
   widgetLook.vinyl = `#${color.getHexString()}`;
@@ -467,7 +469,7 @@ addEventListener('pointerdown', (e) => {
   if (e.target !== canvas) return;
   wake();
   setPointer(e);
-  const hit = deck.pick(ray) || pickVideo();
+  const hit = deck.pick(ray) || pickVideo() || pickCat();
   if (!hit) {
     if (panelOpen && snap.track) { panelOpen = false; renderPanels(); }
     return;
@@ -492,6 +494,7 @@ addEventListener('pointerdown', (e) => {
     case 'cover': deck.toggleCover(); break;
     case 'sleeve': panelOpen = true; $('#settings').hidden = true; renderPanels(); break;
     case 'video': toggle(); break;
+    case 'cat': cat.pet(); vinyl.unlock(); vinyl.purr(4.5, settings.volume); break;
   }
   canvas.className = drag ? 'grabbing' : '';
   showTip(null);
@@ -502,7 +505,7 @@ canvas.addEventListener('pointermove', (e) => {
   const p = new THREE.Vector3();
   if (drag === 'arm') { if (ray.ray.intersectPlane(armPlane, p)) deck.dragTo(p); return; }
   if (drag === 'pitch') { if (ray.ray.intersectPlane(pitchPlane, p)) setPitch(deck.pitchFromPoint(p)); return; }
-  const hit = deck.pick(ray) || pickVideo();
+  const hit = deck.pick(ray) || pickVideo() || pickCat();
   canvas.className = hit === 'arm' || hit === 'pitch' ? 'grab' : hit ? 'pointer' : '';
   showTip(hit, e);
 });
@@ -519,7 +522,11 @@ const TIPS = {
   cover: 'Dust cover: click to open or close',
   sleeve: 'Album sleeve: change the record',
   video: 'Click to play or pause',
+  cat: 'Pet the cat',
 };
+function pickCat() {
+  return cat.group.visible && cat.pickables && ray.intersectObjects(cat.pickables, false).length ? 'cat' : null;
+}
 // The video tablet, when it's out.
 function pickVideo() {
   return stand.group.visible && ray.intersectObjects(stand.pickables, false).length ? 'video' : null;
@@ -672,6 +679,35 @@ for (const [name, f] of Object.entries(FINISHES)) {
   b.addEventListener('click', () => setFinish(name));
   finishes.appendChild(b);
 }
+{
+  const b = document.createElement('button');
+  b.className = 'custom-swatch';
+  b.title = 'Custom colour';
+  b.setAttribute('aria-label', 'Custom colour');
+  b.dataset.finish = 'custom';
+  b.addEventListener('click', () => setFinish(settings.customFinish));
+  finishes.appendChild(b);
+}
+
+// A colour picker plus a hex field, kept in step. Calls back only with valid '#rrggbb'.
+function hexRow(row, onChange) {
+  const [picker, text] = row.querySelectorAll('input[type=color], input[type=text]');
+  const show = (hex) => { picker.value = hex; text.value = hex; text.removeAttribute('aria-invalid'); };
+  picker.addEventListener('input', () => { show(picker.value); onChange(picker.value); });
+  text.addEventListener('input', () => {
+    let v = text.value.trim();
+    if (v && !v.startsWith('#')) v = `#${v}`;
+    const ok = HEX.test(v);
+    text.setAttribute('aria-invalid', String(!ok && v.length >= 7));
+    if (ok) { picker.value = v.toLowerCase(); onChange(v.toLowerCase()); }
+  });
+  text.addEventListener('blur', () => show(picker.value));
+  text.addEventListener('keydown', (e) => e.stopPropagation()); // typing isn't a keyboard shortcut
+  return show;
+}
+const isCustomFinish = (v) => !FINISHES[v];
+const showFinishHex = hexRow($('#finish-custom'), (hex) => setFinish(`${hex}${$('#finish-wood').checked ? ':wood' : ''}`));
+$('#finish-wood').addEventListener('change', (e) => setFinish(`${settings.customFinish.split(':')[0]}${e.target.checked ? ':wood' : ''}`));
 // Light rooms get a mid-tone linen and a touch less exposure, so pale finishes and black vinyl keep their contrast.
 const THEMES = {
   dark: { bg: 0x16120f, table: '#2b2521', exposure: 1.0 },
@@ -679,11 +715,21 @@ const THEMES = {
 };
 // The finish only changes the turntable (and the speakers, which share its veneer).
 function setFinish(name) {
+  const custom = isCustomFinish(name);
+  if (custom && !HEX.test(String(name).split(':')[0])) name = 'walnut';
   settings.finish = name;
+  if (isCustomFinish(name)) settings.customFinish = name;
   save();
   const f = deck.setFinish(name);
+  const key = isCustomFinish(name) ? 'custom' : name;
   $('#finish-name').textContent = f.label;
-  finishes.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.finish === name)));
+  finishes.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.finish === key)));
+  $('#finish-custom').hidden = key !== 'custom';
+  if (key === 'custom') {
+    const [hex, kind] = name.split(':');
+    showFinishHex(hex);
+    $('#finish-wood').checked = kind === 'wood';
+  }
 }
 
 // The room is its own choice: warm evening light (default) or a bright daylight room.
@@ -701,8 +747,40 @@ function setRoom(name) {
   tableMat.map = makeTableTexture(theme.table);
   tableMat.needsUpdate = true;
   document.querySelectorAll('#room-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.room === settings.room)));
+  room.setWallColor(settings.wallHex);
+  showWallHex(settings.wallHex || wallDefault());
 }
 document.querySelectorAll('#room-mode button').forEach((b) => b.addEventListener('click', () => setRoom(b.dataset.room)));
+
+// Time of day: moves the sun at the window and changes the lamp in the room. Auto follows the clock.
+const KEY_BY_TIME = {
+  morning: { color: 0xf2efe9, k: 0.85, env: 1, fill: 0.4 },
+  day: { color: 0xffeedd, k: 1, env: 1, fill: 0.35 },
+  golden: { color: 0xffd6ae, k: 0.92, env: 0.9, fill: 0.3 },
+  night: { color: 0xffbd80, k: 0.8, env: 0.45, fill: 0.1 }, // just the warm lamp
+};
+const KEY_BASE = key.intensity;
+let shownTime;
+function applyTime() {
+  const t = settings.time === 'auto' ? timeNow() : settings.time;
+  if (t === shownTime) return;
+  shownTime = t;
+  room.setTime(t);
+  const k = KEY_BY_TIME[t];
+  key.color.set(k.color);
+  key.intensity = KEY_BASE * k.k;
+  fill.intensity = k.fill;
+  scene.environmentIntensity = 0.6 * k.env;
+}
+function setTime(t) {
+  settings.time = ['auto', ...Object.keys(KEY_BY_TIME)].includes(t) ? t : 'auto';
+  save();
+  shownTime = null;
+  applyTime();
+  document.querySelectorAll('#time-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.t === settings.time)));
+}
+document.querySelectorAll('#time-mode button').forEach((b) => b.addEventListener('click', () => setTime(b.dataset.t)));
+setInterval(applyTime, 60_000); // Auto: the light changes as the day goes on
 
 // What's outside the window. Still costs nothing; the others redraw the window light ~15×/s.
 function setWeather(w) {
@@ -724,8 +802,20 @@ function setVinylMode(v) {
   settings.vinyl = v;
   save();
   document.querySelectorAll('#vinyl-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  $('#vinyl-custom').hidden = v !== 'custom';
+  showVinylHex(settings.vinylHex);
   if (lastArt) pressRecord(lastArt.track, false);
 }
+const showVinylHex = hexRow($('#vinyl-custom'), (hex) => {
+  settings.vinylHex = hex;
+  save();
+  clearTimeout(showVinylHex.t); // re-pressing the record is heavier; wait for the picker to settle
+  showVinylHex.t = setTimeout(() => lastArt && pressRecord(lastArt.track, false), 120);
+});
+// Wall colour: any hex, or Reset to the room's own.
+const showWallHex = hexRow($('#wall-custom'), (hex) => { settings.wallHex = hex; save(); room.setWallColor(hex); });
+$('#wall-reset').addEventListener('click', () => { settings.wallHex = null; save(); room.setWallColor(null); showWallHex(wallDefault()); });
+const wallDefault = () => (settings.room === 'daylight' ? ROOM_THEMES.light.wall : ROOM_THEMES.dark.wall);
 document.querySelectorAll('#vinyl-mode button').forEach((b) => b.addEventListener('click', () => setVinylMode(b.dataset.v)));
 $('#speakers').checked = settings.speakers;
 speakers.visible = settings.speakers;
@@ -735,6 +825,29 @@ const setSleeve = (on) => { deck.sleeve.visible = on; deck.sleevePickables.forEa
 $('#sleeve').checked = settings.sleeve;
 setSleeve(settings.sleeve);
 $('#sleeve').addEventListener('change', (e) => { settings.sleeve = e.target.checked; setSleeve(e.target.checked); save(); });
+// The cat, and its coat.
+const coats = $('#coats');
+for (const [name, c] of Object.entries(COATS)) {
+  const b = document.createElement('button');
+  b.title = c.label;
+  b.setAttribute('aria-label', c.label);
+  b.style.background = c.pattern === 'calico' ? `conic-gradient(${c.base} 0 40%, ${c.light} 0 70%, ${c.stripe} 0)` : c.base;
+  b.dataset.coat = name;
+  b.addEventListener('click', () => setCat(true, name));
+  coats.appendChild(b);
+}
+function setCat(on, coat = settings.catCoat) {
+  settings.cat = on;
+  settings.catCoat = COATS[coat] ? coat : 'ginger';
+  save();
+  cat.group.visible = on;
+  if (on) cat.setCoat(settings.catCoat);
+  $('#cat').checked = on;
+  coats.hidden = !on;
+  coats.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.coat === settings.catCoat)));
+}
+$('#cat').addEventListener('change', (e) => setCat(e.target.checked));
+setCat(settings.cat);
 $('#crackle').value = settings.crackle;
 $('#crackle').addEventListener('input', (e) => { settings.crackle = +e.target.value; vinyl.setLevel(settings.crackle * settings.volume); save(); });
 $('#pin').addEventListener('change', (e) => window.needledrop?.pin(e.target.checked));
@@ -782,6 +895,8 @@ function broadcastToWidgets(progress, wantsPlay, mode) {
 
 setFinish(settings.finish);
 setRoom(settings.room);
+setTime(settings.time);
+showWallHex(settings.wallHex || wallDefault());
 setWeather(settings.weather);
 setVinylMode(settings.vinyl);
 setVolume(settings.volume);
@@ -840,6 +955,7 @@ function frame(fixedDt) {
   }
   if (!Number.isFinite(camera.position.lengthSq())) { frameCamera.done = false; frameCamera(); }
   stand.update(dt, settings.showVideo && source === sources.youtube && !!snap.track);
+  cat.setSpot(stand.group.visible);
   controls.update();
   const camDist = camera.position.distanceTo(controls.target);
   scene.fog.near = camDist + 45;
@@ -850,7 +966,7 @@ function frame(fixedDt) {
   const sig = [deck.theta, deck.lift, deck.spin, deck.coverT, deck.recordDrop, deck.pressed.size, stand.t, levels.bass,
     camera.position.x, camera.position.y, camera.position.z, settings.pitch, settings.rpm].map((v) => v.toFixed(4)).join();
   // A turning platter is always motion, even when the arm creeps too slowly to register.
-  const weatherMoved = room.update(dt); // redraws ~15×/s, so idle frames render at that rate, not 60
+  const weatherMoved = room.update(dt) | cat.update(dt); // both ~15×/s, so idle frames render at that rate, not 60
   const active = fixedDt !== undefined || deck.spin > 0.001 || sig !== lastSig || viewTween || drag || weatherMoved;
   lastSig = sig;
   idleFrames = active ? 0 : idleFrames + 1;
@@ -887,4 +1003,4 @@ function cutVideoHole() {
 }
 renderer.setAnimationLoop(() => frame());
 
-if (import.meta.env.DEV) window.__nd = { frame, levels, speakers, stand, renderer, scene, camera, controls, deck, snap, sources, settings };
+if (import.meta.env.DEV) window.__nd = { cat, room, frame, levels, speakers, stand, renderer, scene, camera, controls, deck, snap, sources, settings };
