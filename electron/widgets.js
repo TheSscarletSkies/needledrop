@@ -79,6 +79,9 @@ export class Widgets {
       width: w, height: h, x, y,
       frame: false, resizable: k.resizable, maximizable: false, minimizable: false, fullscreenable: false,
       skipTaskbar: true, show: false,
+      // A widget is never the focused window. Without this, macOS spends the first click on
+      // activating it, so buttons need two clicks and double-click-to-open never fires.
+      acceptFirstMouse: true,
       ...(k.resizable ? { minWidth: k.min[0], minHeight: k.min[1], maxWidth: k.max[0], maxHeight: k.max[1] } : {}),
       ...look,
       webPreferences: { preload: this.preload, contextIsolation: true, nodeIntegration: false, sandbox: true },
