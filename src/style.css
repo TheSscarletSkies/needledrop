@@ -200,11 +200,34 @@ body.src-system .volume { display: none; } /* Spotify and Music have their own v
 /* ---- settings ---- */
 .settings {
   position: fixed; top: 64px; right: 16px; width: 290px; padding: 4px 16px 16px; border-radius: 14px; z-index: 4;
-  max-height: calc(100% - 80px); overflow-y: auto; overscroll-behavior: contain;
+  max-height: calc(100% - 80px); overflow-y: auto; overscroll-behavior: contain; padding-top: 0;
   background: var(--glass); backdrop-filter: blur(20px) saturate(1.2); border: 1px solid var(--line); font-size: 13px;
   animation: rise 0.28s var(--ease);
 }
 .settings[hidden] { display: none; }
+/* Tabs: a quiet segmented row pinned to the top of the sheet; panes swap underneath. */
+.stabs {
+  position: sticky; top: 0; z-index: 1; display: flex; gap: 2px; margin: 0 -16px; padding: 10px 12px 8px;
+  background: linear-gradient(var(--glass) 70%, transparent); 
+}
+.stabs button {
+  flex: 1; border: 0; background: none; padding: 6px 4px; border-radius: 8px; color: var(--ink-3);
+  font-size: 12px; font-weight: 500; cursor: pointer; transition: color 0.15s, background 0.15s;
+}
+.stabs button:hover { color: var(--ink-2); }
+.stabs button[aria-selected='true'] { color: var(--ink); background: var(--line); }
+.stabs .stab-help { flex: 0 0 28px; font-weight: 600; }
+.spane[hidden] { display: none; }
+.spane { animation: fade 0.18s var(--ease); }
+.spane > h3:first-child, .spane > .desktop-only:first-child > h3:first-child { margin-top: 6px; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.legend.keys li { margin-bottom: 4px; }
+kbd {
+  display: inline-block; min-width: 18px; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--line);
+  background: var(--line); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; color: var(--ink);
+}
+.settings p.hint-inline { margin: 12px 0 0; line-height: 1.5; }
+body.desktop .web-only { display: none; }
 .settings h3 {
   display: flex; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
   color: var(--ink-3); margin: 16px 0 8px; font-weight: 600;

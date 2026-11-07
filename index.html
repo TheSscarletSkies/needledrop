@@ -72,77 +72,110 @@
     <div class="tip" id="tip" role="tooltip"></div>
     <div class="coach" id="coach" aria-hidden="true"><span>Lift the arm onto the record</span></div>
 
-    <aside class="settings" id="settings" hidden>
-      <h3>Finish <span id="finish-name"></span></h3>
-      <div class="swatches" id="finishes"></div>
-      <div class="hexrow" id="finish-custom" hidden>
-        <input type="color" aria-label="Deck colour" />
-        <input type="text" spellcheck="false" maxlength="7" aria-label="Deck colour hex code" />
-        <label class="check"><input type="checkbox" id="finish-wood" /> Wood grain</label>
-      </div>
-      <h3>Room</h3>
-      <div class="seg" id="room-mode">
-        <button data-room="evening">Evening</button>
-        <button data-room="daylight">Daylight</button>
-      </div>
-      <div class="hexrow" id="wall-custom">
-        <span class="hexlabel">Wall</span>
-        <input type="color" aria-label="Wall colour" />
-        <input type="text" spellcheck="false" maxlength="7" aria-label="Wall colour hex code" />
-        <button class="linkish" id="wall-reset">Reset</button>
-      </div>
-      <h3>Time of day</h3>
-      <div class="seg" id="time-mode">
-        <button data-t="auto" title="Follows your clock">Auto</button>
-        <button data-t="morning">Morning</button>
-        <button data-t="day">Day</button>
-        <button data-t="golden">Golden</button>
-        <button data-t="night">Night</button>
-      </div>
-      <h3>Outside the window</h3>
-      <div class="seg" id="weather-mode">
-        <button data-w="breeze">Breeze</button>
-        <button data-w="rain">Rain</button>
-        <button data-w="snow">Snow</button>
-        <button data-w="still">Still</button>
-      </div>
-      <label class="check" id="rain-sound-row"><input type="checkbox" id="rain-sound" /> Sound of the rain</label>
-      <h3>Pressing</h3>
-      <div class="seg" id="vinyl-mode">
-        <button data-v="black">Black</button>
-        <button data-v="color">From art</button>
-        <button data-v="custom">Custom</button>
-      </div>
-      <div class="hexrow" id="vinyl-custom" hidden>
-        <input type="color" aria-label="Record colour" />
-        <input type="text" spellcheck="false" maxlength="7" aria-label="Record colour hex code" />
-      </div>
-      <h3>On the sideboard</h3>
-      <label class="check"><input type="checkbox" id="speakers" /> Speakers</label>
-      <label class="check"><input type="checkbox" id="yt-show" /> Video stand <span class="hint-inline">for YouTube</span></label>
-      <label class="check"><input type="checkbox" id="sleeve" /> Album sleeve</label>
-      <label class="check"><input type="checkbox" id="cat" /> A sleeping cat</label>
-      <div class="swatches coats" id="coats"></div>
-      <h3>Surface noise</h3>
-      <input type="range" id="crackle" min="0" max="1" step="0.01" aria-label="Surface noise level" />
-      <div class="desktop-only">
-        <h3>Window</h3>
-        <label class="check"><input type="checkbox" id="pin" /> Keep on top</label>
-        <label class="check"><input type="checkbox" id="compact" /> Compact</label>
-        <h3>Desktop widgets</h3>
-        <label class="check"><input type="checkbox" id="w-deck" /> Turntable</label>
-        <label class="check"><input type="checkbox" id="w-strip" /> Now-playing strip</label>
-        <label class="check"><input type="checkbox" id="w-top" /> Keep widgets on top</label>
-      </div>
-      <h3>On the deck</h3>
-      <ul class="legend">
-        <li><b>Tonearm</b> drag onto the record to play, anywhere to seek</li>
-        <li><b>Cue lever</b> lift / lower the needle</li>
-        <li><b>33 · 45</b> speed; <b>Pitch</b> ±8 %</li>
-        <li><b>Lid</b> click to open or close</li>
-        <li><b>Sleeve</b> click to change the record</li>
-        <li><b>Keys</b> Space · ← → seek · ↑ ↓ volume · M mute · N / P</li>
-      </ul>
+    <aside class="settings" id="settings" hidden aria-label="Settings">
+      <nav class="stabs" role="tablist" aria-label="Settings sections">
+        <button role="tab" data-tab="deck">Deck</button>
+        <button role="tab" data-tab="room">Room</button>
+        <button role="tab" data-tab="sideboard">Sideboard</button>
+        <button role="tab" data-tab="app">App</button>
+        <button role="tab" data-tab="help" class="stab-help" aria-label="How to use the deck" title="How to use the deck">?</button>
+      </nav>
+
+      <section class="spane" role="tabpanel" data-pane="deck">
+        <h3>Finish <span id="finish-name"></span></h3>
+        <div class="swatches" id="finishes"></div>
+        <div class="hexrow" id="finish-custom" hidden>
+          <input type="color" aria-label="Deck colour" />
+          <input type="text" spellcheck="false" maxlength="7" aria-label="Deck colour hex code" />
+          <label class="check"><input type="checkbox" id="finish-wood" /> Wood grain</label>
+        </div>
+        <h3>Pressing</h3>
+        <div class="seg" id="vinyl-mode">
+          <button data-v="black">Black</button>
+          <button data-v="color">From art</button>
+          <button data-v="custom">Custom</button>
+        </div>
+        <div class="hexrow" id="vinyl-custom" hidden>
+          <input type="color" aria-label="Record colour" />
+          <input type="text" spellcheck="false" maxlength="7" aria-label="Record colour hex code" />
+        </div>
+        <h3>Surface noise</h3>
+        <input type="range" id="crackle" min="0" max="1" step="0.01" aria-label="Surface noise level" />
+      </section>
+
+      <section class="spane" role="tabpanel" data-pane="room" hidden>
+        <h3>Light</h3>
+        <div class="seg" id="room-mode">
+          <button data-room="evening">Evening</button>
+          <button data-room="daylight">Daylight</button>
+        </div>
+        <div class="hexrow" id="wall-custom">
+          <span class="hexlabel">Wall</span>
+          <input type="color" aria-label="Wall colour" />
+          <input type="text" spellcheck="false" maxlength="7" aria-label="Wall colour hex code" />
+          <button class="linkish" id="wall-reset">Reset</button>
+        </div>
+        <h3>Time of day</h3>
+        <div class="seg" id="time-mode">
+          <button data-t="auto" title="Follows your clock">Auto</button>
+          <button data-t="morning">Morning</button>
+          <button data-t="day">Day</button>
+          <button data-t="golden">Golden</button>
+          <button data-t="night">Night</button>
+        </div>
+        <h3>Outside the window</h3>
+        <div class="seg" id="weather-mode">
+          <button data-w="breeze">Breeze</button>
+          <button data-w="rain">Rain</button>
+          <button data-w="snow">Snow</button>
+          <button data-w="still">Still</button>
+        </div>
+        <label class="check" id="rain-sound-row"><input type="checkbox" id="rain-sound" /> Sound of the rain</label>
+      </section>
+
+      <section class="spane" role="tabpanel" data-pane="sideboard" hidden>
+        <h3>On the sideboard</h3>
+        <label class="check"><input type="checkbox" id="speakers" /> Speakers</label>
+        <label class="check"><input type="checkbox" id="yt-show" /> Video stand <span class="hint-inline">for YouTube</span></label>
+        <label class="check"><input type="checkbox" id="sleeve" /> Album sleeve</label>
+        <label class="check"><input type="checkbox" id="cat" /> A sleeping cat</label>
+        <div class="swatches coats" id="coats"></div>
+      </section>
+
+      <section class="spane" role="tabpanel" data-pane="app" hidden>
+        <div class="desktop-only">
+          <h3>Window</h3>
+          <label class="check"><input type="checkbox" id="pin" /> Keep on top</label>
+          <label class="check"><input type="checkbox" id="compact" /> Compact</label>
+          <h3>Desktop widgets</h3>
+          <label class="check"><input type="checkbox" id="w-deck" /> Turntable</label>
+          <label class="check"><input type="checkbox" id="w-strip" /> Now-playing strip</label>
+          <label class="check"><input type="checkbox" id="w-top" /> Keep widgets on top</label>
+        </div>
+        <p class="web-only hint-inline">Window and widget options are in the desktop app.</p>
+        <h3>Keyboard</h3>
+        <ul class="legend keys">
+          <li><kbd>Space</kbd> play / pause</li>
+          <li><kbd>←</kbd> <kbd>→</kbd> seek 10 s</li>
+          <li><kbd>↑</kbd> <kbd>↓</kbd> volume · <kbd>M</kbd> mute</li>
+          <li><kbd>N</kbd> / <kbd>P</kbd> next / previous</li>
+          <li><kbd>Esc</kbd> close panels</li>
+        </ul>
+      </section>
+
+      <section class="spane" role="tabpanel" data-pane="help" hidden>
+        <h3>On the deck</h3>
+        <ul class="legend">
+          <li><b>Tonearm</b> drag onto the record to play, anywhere to seek</li>
+          <li><b>Cue lever</b> lift / lower the needle</li>
+          <li><b>33 · 45</b> speed; <b>Pitch</b> ±8 %</li>
+          <li><b>Lid</b> click to open or close</li>
+          <li><b>Sleeve</b> click to change the record</li>
+          <li><b>Cat</b> pet it</li>
+          <li><b>Double-click</b> empty space to reset the view</li>
+        </ul>
+        <p class="hint-inline">Hover anything on the turntable to see what it does.</p>
+      </section>
     </aside>
 
     <div class="drop-overlay" id="drop-overlay"><div>Drop to put it on the platter</div></div>

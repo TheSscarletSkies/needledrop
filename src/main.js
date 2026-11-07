@@ -35,7 +35,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', cat: true, catCoat: 'ginger', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false, time: 'auto', settingsTab: 'deck', cat: true, catCoat: 'ginger', customFinish: '#7d4a3e:wood', vinylHex: '#b8323f', wallHex: null },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -590,6 +590,26 @@ document.querySelectorAll('.sources button').forEach((b) => b.addEventListener('
   }
   else switchSource(b.dataset.source);
 }));
+// Settings tabs; the sheet reopens on whichever tab was used last.
+function showSettingsTab(name) {
+  if (!document.querySelector(`.spane[data-pane="${name}"]`)) name = 'deck';
+  settings.settingsTab = name;
+  save();
+  document.querySelectorAll('.stabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  document.querySelectorAll('.spane').forEach((p) => { p.hidden = p.dataset.pane !== name; });
+  $('#settings').scrollTop = 0;
+}
+document.querySelectorAll('.stabs button').forEach((b) => b.addEventListener('click', () => showSettingsTab(b.dataset.tab)));
+$('#settings').addEventListener('keydown', (e) => { // ← → between tabs when a tab has focus
+  if (!e.target.closest('.stabs') || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  e.stopPropagation();
+  const tabs = [...document.querySelectorAll('.stabs button')];
+  const i = tabs.indexOf(e.target) + (e.key === 'ArrowRight' ? 1 : -1);
+  const next = tabs[(i + tabs.length) % tabs.length];
+  next.focus();
+  showSettingsTab(next.dataset.tab);
+});
+showSettingsTab(settings.settingsTab);
 $('#settings-btn').addEventListener('click', () => {
   const s = $('#settings');
   s.hidden = !s.hidden;
