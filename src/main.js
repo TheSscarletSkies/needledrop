@@ -12,6 +12,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { Turntable, TABLE_Y } from './scene/turntable.js';
 import { VideoStand } from './scene/videoStand.js';
 import { Room } from './scene/room.js';
+import { WEATHERS } from './scene/weather.js';
 import { FINISHES, loadImage, dominantColor, makeTableTexture } from './scene/textures.js';
 import { SystemSource } from './sources/system.js';
 import { YouTubeSource } from './sources/youtube.js';
@@ -33,7 +34,7 @@ if (!isMac) {
 
 // ---------- settings ----------
 const settings = Object.assign(
-  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening' },
+  { finish: 'walnut', vinyl: 'black', rpm: 33.333, pitch: 0, crackle: 0.45, source: isDesktop ? 'system' : 'youtube', ytUrl: '', coached: false, speakers: true, sleeve: true, volume: 0.85, room: 'evening', weather: 'breeze', rainSound: false },
   JSON.parse(localStorage.getItem('needledrop') || '{}'),
 );
 const save = () => localStorage.setItem('needledrop', JSON.stringify(settings));
@@ -403,6 +404,7 @@ function setVolume(v) {
   sources.local.setVolume(settings.volume);
   sources.youtube.setVolume(settings.volume);
   vinyl.setLevel(settings.crackle * settings.volume); // surface noise is part of the record, so it follows the volume
+  applyRainSound();
   $('#volume').value = settings.volume;
 }
 $('#volume').addEventListener('input', (e) => setVolume(+e.target.value));
@@ -702,6 +704,22 @@ function setRoom(name) {
 }
 document.querySelectorAll('#room-mode button').forEach((b) => b.addEventListener('click', () => setRoom(b.dataset.room)));
 
+// What's outside the window. Still costs nothing; the others redraw the window light ~15×/s.
+function setWeather(w) {
+  settings.weather = WEATHERS.includes(w) ? w : 'breeze';
+  save();
+  room.setWeather(settings.weather);
+  document.querySelectorAll('#weather-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.w === settings.weather)));
+  $('#rain-sound-row').hidden = settings.weather !== 'rain';
+  applyRainSound();
+}
+function applyRainSound() {
+  vinyl.setRain(settings.weather === 'rain' && settings.rainSound ? settings.volume : 0);
+}
+document.querySelectorAll('#weather-mode button').forEach((b) => b.addEventListener('click', () => setWeather(b.dataset.w)));
+$('#rain-sound').checked = settings.rainSound;
+$('#rain-sound').addEventListener('change', (e) => { settings.rainSound = e.target.checked; save(); vinyl.unlock(); applyRainSound(); });
+
 function setVinylMode(v) {
   settings.vinyl = v;
   save();
@@ -764,6 +782,7 @@ function broadcastToWidgets(progress, wantsPlay, mode) {
 
 setFinish(settings.finish);
 setRoom(settings.room);
+setWeather(settings.weather);
 setVinylMode(settings.vinyl);
 setVolume(settings.volume);
 switchSource(source.name, { open: false });
@@ -831,7 +850,8 @@ function frame(fixedDt) {
   const sig = [deck.theta, deck.lift, deck.spin, deck.coverT, deck.recordDrop, deck.pressed.size, stand.t, levels.bass,
     camera.position.x, camera.position.y, camera.position.z, settings.pitch, settings.rpm].map((v) => v.toFixed(4)).join();
   // A turning platter is always motion, even when the arm creeps too slowly to register.
-  const active = fixedDt !== undefined || deck.spin > 0.001 || sig !== lastSig || viewTween || drag;
+  const weatherMoved = room.update(dt); // redraws ~15×/s, so idle frames render at that rate, not 60
+  const active = fixedDt !== undefined || deck.spin > 0.001 || sig !== lastSig || viewTween || drag || weatherMoved;
   lastSig = sig;
   idleFrames = active ? 0 : idleFrames + 1;
   if (idleFrames > 3 && idleFrames % 15 !== 0) return;

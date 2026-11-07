@@ -112,6 +112,7 @@ body.light #yt-form input { background: rgba(255, 255, 255, 0.6); }
 .link-btn:hover { color: var(--ink); }
 .check { display: flex; gap: 8px; align-items: center; margin-top: 8px; color: var(--ink-2); cursor: pointer; }
 .check input { accent-color: var(--accent); }
+.check[hidden] { display: none; }
 #queue { margin: 10px -6px 0; padding: 0; list-style: none; }
 #queue:empty { display: none; }
 #queue li { display: flex; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; color: var(--ink-2); }
