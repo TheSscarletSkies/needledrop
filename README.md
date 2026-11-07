@@ -25,7 +25,7 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Desktop widgets:**
   - **Turntable:** the same deck seen from straight above, like a product shot on your desk, floating with just its shadow. Drag an edge to resize it; it keeps its proportions and remembers its size and position. The tonearm, start/stop, cue lever, 33/45 and pitch all work and control the main window. Drag empty space to move it, double-click to open Needledrop, and hover for × to close it.
   - **Now-playing strip:** a small spinning record with the title and transport, in frosted glass tinted from the album art.
-  - Both float on top by default, or can sit with your other windows.
+  - Both sit on the desktop behind your windows, like macOS widgets, or tick *Float above other windows* to keep them in front.
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
 - **Room:** a linen-covered sideboard against a plaster wall, with late-afternoon window light and leaf shadows falling across it, soft depth of field, and ambient occlusion for contact shadows.
 - **Weather outside the window:** a branch swaying in the breeze, rain gathering and running down the glass (with an optional, synthesised rain sound), or snow drifting through the sunbeam, all as moving light and shadow. Choose **Still** for a static window that uses no extra battery.

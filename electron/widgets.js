@@ -19,7 +19,10 @@ export class Widgets {
     this.lastState = null;
     this.file = path.join(app.getPath('userData'), 'widgets.json');
     try { this.prefs = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch { this.prefs = {}; }
-    this.prefs = { deck: false, strip: false, onTop: true, pos: {}, size: {}, ...this.prefs };
+    this.prefs = { deck: false, strip: false, onTop: false, pos: {}, size: {}, ...this.prefs };
+    // v2: widgets sit on the desktop behind other windows by default, like macOS widgets. Earlier
+    // versions saved "on top" as the default, so reset it once for everyone.
+    if (this.prefs.v !== 2) { this.prefs.onTop = false; this.prefs.v = 2; this.#save(); }
   }
 
   #save() { fs.writeFile(this.file, JSON.stringify(this.prefs), () => {}); }
@@ -79,6 +82,9 @@ export class Widgets {
       width: w, height: h, x, y,
       frame: false, resizable: k.resizable, maximizable: false, minimizable: false, fullscreenable: false,
       skipTaskbar: true, show: false,
+      // Never takes focus, so clicking a widget doesn't pull Needledrop (or the widget) in front
+      // of the app you're working in; it stays on the desktop like a macOS widget.
+      focusable: false,
       // A widget is never the focused window. Without this, macOS spends the first click on
       // activating it, so buttons need two clicks and double-click-to-open never fires.
       acceptFirstMouse: true,
