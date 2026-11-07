@@ -18,22 +18,22 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.03).texture;
-scene.environmentIntensity = 0.65;
+scene.environmentIntensity = 0.22; // from straight above the studio lights mirror in the vinyl; keep them faint
 
-const key = new THREE.DirectionalLight(0xffeedd, 2.6);
-key.position.set(-30, 60, 25);
+const key = new THREE.DirectionalLight(0xffeedd, 2.1);
+key.position.set(-42, 48, -26); // low from the upper left: no glare off the vinyl, shadow falls down-right
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32 });
 key.shadow.bias = -0.0003;
 key.shadow.radius = 4;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xdfe8ff, 0.4);
+const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);
 fill.position.set(40, 25, -10);
 scene.add(fill);
 
 // Only the deck's own soft shadow lands on the desktop.
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.32 }));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.28 }));
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = TABLE_Y;
 ground.receiveShadow = true;
@@ -45,18 +45,20 @@ deck.cover.visible = false; // lid off, the way you'd run it on a desk
 deck.coverPanels = [];
 deck.sleevePickables = []; // raycasts don't skip hidden objects
 
-// Fit the plinth to the window whatever its size; the window keeps a fixed aspect ratio.
-const camera = new THREE.PerspectiveCamera(30, 1, 1, 400);
-const target = new THREE.Vector3(0, -2.5, 1);
+// Seen from directly above, like a product shot on a desk: flat and graphic on the Mac desktop,
+// where the main window keeps its three-quarter view. An orthographic camera, so nothing
+// foreshortens; the plinth (46 × 36) fills the window with a margin for its shadow.
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 400);
+camera.position.set(0.9, 150, 1.1); // nudged toward the shadow so it isn't clipped
+camera.up.set(0, 0, -1); // the back of the deck at the top of the window
+camera.lookAt(0.9, 0, 1.1);
 function fit() {
   const w = innerWidth, h = innerHeight;
   if (w < 2 || h < 2) return;
   renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  const half = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const dist = Math.max(31 / (half * camera.aspect), 27 / half);
-  camera.position.copy(target).add(new THREE.Vector3(0, dist * 0.74, dist * 0.67));
-  camera.lookAt(target);
+  let hw = 23 + 3.2, hh = 18 + 3.6;
+  if (w / h > hw / hh) hw = hh * (w / h); else hh = hw / (w / h);
+  Object.assign(camera, { left: -hw, right: hw, top: hh, bottom: -hh });
   camera.updateProjectionMatrix();
   dirty = true;
 }

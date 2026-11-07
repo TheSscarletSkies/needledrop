@@ -23,7 +23,7 @@ Every part of the deck either works or is there because a real direct-drive turn
 - **Speakers that move with the music:** walnut bookshelf speakers whose woofer cones and tweeter domes respond to what's actually playing. They hear YouTube and local files on every platform, and everything on Windows. On macOS and Linux, Spotify and other players run in their own apps, which Needledrop can't hear, so the speakers stay still rather than fake it.
 - **Video on a stand:** YouTube video plays on a tablet in a walnut stand beside the deck, and it's properly hidden when the deck passes in front of it.
 - **Desktop widgets:**
-  - **Turntable:** the same 3D deck, floating on your desktop with just its shadow. Drag an edge to resize it; it keeps its proportions and remembers its size and position. The tonearm, start/stop, cue lever, 33/45 and pitch all work and control the main window. Drag empty space to move it, double-click to open Needledrop, and hover for × to close it.
+  - **Turntable:** the same deck seen from straight above, like a product shot on your desk, floating with just its shadow. Drag an edge to resize it; it keeps its proportions and remembers its size and position. The tonearm, start/stop, cue lever, 33/45 and pitch all work and control the main window. Drag empty space to move it, double-click to open Needledrop, and hover for × to close it.
   - **Now-playing strip:** a small spinning record with the title and transport, in frosted glass tinted from the album art.
   - Both float on top by default, or can sit with your other windows.
 - **Surface noise:** hiss and pops, a thump on needle drop and a click on lift, all synthesised with Web Audio.
@@ -89,7 +89,7 @@ Get-FileHash .\Needledrop-Setup-0.1.4-x64.exe -Algorithm SHA256
 - **Your music player:** on the **Spotify · Music** tab (*Now playing* on Windows and Linux), just play something in Spotify or Apple Music. The record follows, and the deck's controls control it.
 - **YouTube:** paste a video or playlist link on the **YouTube** tab.
 - **Your files:** drag songs or a whole folder onto the window, use **Add files** / **Add folder**, or open them with Needledrop from Finder.
-- **Hover anything on the turntable** to see what it does. **Settings** (the gear) has the finishes, the room, what's on the sideboard and the desktop widgets.
+- **Hover anything on the turntable** to see what it does. **Settings** (the gear) has tabs for the deck, the room, the sideboard and the app (window and desktop widgets).
 
 ## Run it from source
 
