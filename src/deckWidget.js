@@ -122,7 +122,7 @@ canvas.addEventListener('pointermove', (e) => {
   }
   if (dragging.window) {
     const d = dragging.window;
-    api?.widgetMoveTo(Math.round(d.wx + e.screenX - d.sx), Math.round(d.wy + e.screenY - d.sy));
+    api?.widgetMoveTo(Math.round(d.wx + e.screenX - d.sx) | 0, Math.round(d.wy + e.screenY - d.sy) | 0);
     return;
   }
   const hit = deck.pick(ray);
@@ -138,6 +138,18 @@ canvas.addEventListener('pointerup', () => {
 canvas.addEventListener('dblclick', (e) => { setPointer(e); if (!deck.pick(ray)) send('open'); });
 document.getElementById('close').addEventListener('click', () => send('close'));
 
+// The × sits just off the plinth's back-right corner, not in the window's empty corner.
+const closeBtn = document.getElementById('close');
+const corner = new THREE.Vector3();
+let closeAt = '';
+function placeClose() {
+  corner.set(23, 0.2, -18).project(camera); // plinth: 46 wide, 36 deep, top at y = 0
+  const x = Math.min(innerWidth - 26, Math.max(4, (corner.x * 0.5 + 0.5) * innerWidth - 4));
+  const y = Math.min(innerHeight - 26, Math.max(4, (-corner.y * 0.5 + 0.5) * innerHeight - 26));
+  const at = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  if (at !== closeAt) closeBtn.style.transform = closeAt = at;
+}
+
 // ---- loop: full rate while anything moves, idle otherwise ----
 const timer = new THREE.Timer();
 let still = 0;
@@ -148,6 +160,6 @@ renderer.setAnimationLoop(() => {
   deck.update(dt, { mode: state.mode, progress: state.progress, spinning: state.spinning });
   const moving = state.spinning || deck.spin > 0.01 || Math.abs(deck.theta + deck.lift - before) > 1e-5 || deck.recordDrop > 0 || dragging.arm || deck.pressed.size;
   still = moving || dirty ? 0 : still + 1;
-  if (still < 2) renderer.render(scene, camera);
+  if (still < 2) { renderer.render(scene, camera); placeClose(); }
   dirty = false;
 });

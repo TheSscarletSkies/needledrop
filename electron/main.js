@@ -202,7 +202,12 @@ ipcMain.on('widget:command', (e, cmd, arg) => {
   if (cmd === 'close') { BrowserWindow.fromWebContents(e.sender)?.close(); return; }
   win?.webContents.send('remote:command', cmd, arg);
 });
-ipcMain.on('widget:moveTo', (e, x, y) => BrowserWindow.fromWebContents(e.sender)?.setPosition(x, y));
+// Window positions must be plain integers: -0 or a fraction (e.g. dragging against the top of the
+// screen) makes setPosition throw. Anything that isn't a finite number is ignored.
+ipcMain.on('widget:moveTo', (e, x, y) => {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+  BrowserWindow.fromWebContents(e.sender)?.setPosition(Math.round(x) | 0, Math.round(y) | 0);
+});
 
 ipcMain.handle('win:pin', (_e, on) => { if (!win) return false; win.setAlwaysOnTop(!!on, 'floating'); return win.isAlwaysOnTop(); });
 ipcMain.handle('win:compact', (_e, on) => {
