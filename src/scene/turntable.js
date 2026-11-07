@@ -190,7 +190,8 @@ export class Turntable {
     this.recordSpin = new THREE.Group();
     this.recordGroup.add(this.recordSpin);
 
-    this.recordFace = new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, anisotropy: 1, clearcoat: 0.25, clearcoatRoughness: 0.2 });
+    // Deep black with a soft sheen: the room shows in it faintly, never as white rings.
+    this.recordFace = new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, anisotropy: 1, clearcoat: 0.14, clearcoatRoughness: 0.32, envMapIntensity: 0.55 });
     this.recordBody = new THREE.MeshPhysicalMaterial({ color: 0x0b0b0b, roughness: 0.22, clearcoat: 0.5 });
 
     // Playing surface (flat, planar UVs) + raised edge bead + underside.

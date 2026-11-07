@@ -152,7 +152,9 @@ export function makeRecordTextures({ img, vinyl, track }) {
     ctx.beginPath();
     ctx.arc(cx, cx, r * px, 0, Math.PI * 2);
     ctx.stroke();
-    const rough = gap ? 22 : 62 + loud * 30;
+    // Gaps are smoother than the grooves, but satin rather than mirror, so they read as faint
+    // darker rings instead of bright white bands reflecting the room.
+    const rough = gap ? 54 : 74 + loud * 16;
     rctx.strokeStyle = `rgb(${rough},${rough},${rough})`;
     rctx.lineWidth = 1.4;
     rctx.beginPath();
@@ -168,8 +170,8 @@ export function makeRecordTextures({ img, vinyl, track }) {
     rctx.arc(cx, cx, from * px, 0, Math.PI * 2, true);
     rctx.fill();
   };
-  band(RECORD.leadIn, RECORD.flat, 'rgb(26,26,26)');
-  band(RECORD.labelRadius, RECORD.runOut, 'rgb(20,20,20)');
+  band(RECORD.leadIn, RECORD.flat, 'rgb(62,62,62)');
+  band(RECORD.labelRadius, RECORD.runOut, 'rgb(64,64,64)');
 
   // Hand-etched matrix number in the dead wax.
   const matrix = `ND-${String(seed % 9000 + 1000)}-A1  ·  △ ${String.fromCharCode(65 + (seed % 26))}`;
