@@ -53,11 +53,30 @@ Every part of the deck either works or is there because a real direct-drive turn
 
 Only download Needledrop from this repository's [Releases page](https://github.com/TheSscarletSkies/needledrop/releases/latest). Copies hosted anywhere else aren't ours.
 
+### Why your computer warns you, and why it's safe to continue
+
+Needledrop is a free hobby project. It isn't yet signed with a paid Apple Developer ID or a Windows code-signing certificate, so the first time you open it:
+
+- **macOS** says it can't verify the developer, or that Apple can't check it for malware.
+- **Windows** SmartScreen says *Windows protected your PC*.
+
+These warnings appear for any app that isn't signed with a paid certificate. They don't mean anything harmful was found. The steps below show how to get past each one; you only do it once.
+
+You don't have to take our word for it that Needledrop is safe:
+
+- **All the code is public.** Everything the app does is in this repository, under the MIT licence.
+- **Nobody builds the downloads by hand.** Every file on the Releases page is built by GitHub Actions from the public code at that version's tag. You can see each build's log under [Actions](https://github.com/TheSscarletSkies/needledrop/actions/workflows/release.yml) and the steps it runs in [`release.yml`](.github/workflows/release.yml).
+- **You can check your file wasn't altered.** Compare its SHA-256 checksum with the one on the Releases page (see [Check your download](#check-your-download-optional)).
+- **It doesn't need risky access.** No account, no analytics, no microphone, camera or screen-recording permission, and it only reads the audio files you open. See [Privacy](#privacy) and [Security](#security) for exactly what it does and doesn't touch.
+- **Don't want to install anything?** You can [build and run it from source](#run-it-from-source) instead.
+
+If anything looks wrong, please [report it privately](SECURITY.md).
+
 ### macOS
 
 1. Download the `.dmg` for your Mac: `Needledrop-…-arm64.dmg` for Apple Silicon (M1 and later), or `Needledrop-….dmg` for Intel.
 2. Open it and drag **Needledrop** into **Applications**.
-3. Open Needledrop. Because the app isn't notarized by Apple yet, macOS says it can't verify the developer. Click **Done**, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Needledrop. You only do this once.
+3. Open Needledrop. Because the app isn't notarized by Apple yet, macOS says it can't verify the developer, or that Apple could not verify Needledrop is free of malware. Click **Done** (not *Move to Trash*), then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Needledrop. You only do this once.
 4. The first time Needledrop reads Spotify or Apple Music, macOS asks whether it may control that app. Click **Allow**, or the record won't follow your music. You can change this later in **System Settings → Privacy & Security → Automation**.
 
 ### Windows
