@@ -66,7 +66,7 @@ You don't have to take our word for it that Needledrop is safe:
 
 - **All the code is public.** Everything the app does is in this repository, under the MIT licence.
 - **Nobody builds the downloads by hand.** Every file on the Releases page is built by GitHub Actions from the public code at that version's tag. You can see each build's log under [Actions](https://github.com/TheSscarletSkies/needledrop/actions/workflows/release.yml) and the steps it runs in [`release.yml`](.github/workflows/release.yml).
-- **You can check your file wasn't altered.** Compare its SHA-256 checksum with the one on the Releases page (see [Check your download](#check-your-download-optional)).
+- **You can check your file wasn't altered.** Compare its SHA-256 checksum with the one on the Releases page, or verify its build attestation, which proves it was built from this repository's public code (see [Check your download](#check-your-download-optional)).
 - **It doesn't need risky access.** No account, no analytics, no microphone, camera or screen-recording permission, and it only reads the audio files you open. See [Privacy](#privacy) and [Security](#security) for exactly what it does and doesn't touch.
 - **Don't want to install anything?** You can [build and run it from source](#run-it-from-source) instead.
 
@@ -102,6 +102,14 @@ On Windows, run this in PowerShell:
 ```powershell
 Get-FileHash .\Needledrop-Setup-0.1.11-x64.exe -Algorithm SHA256
 ```
+
+**Prove where it was built (from 0.1.12 on).** Each download comes with a build attestation: a signed record, kept by GitHub, of the exact workflow, commit and tag that built that file. If you have the [GitHub CLI](https://cli.github.com), run:
+
+```bash
+gh attestation verify ~/Downloads/Needledrop-0.1.12-arm64.dmg --repo TheSscarletSkies/needledrop
+```
+
+If the file was built by this repository's public release workflow and hasn't been changed since, it prints *Verification succeeded!* along with the commit it came from. If it was altered or came from somewhere else, verification fails. You can also see every attestation on the [Attestations page](https://github.com/TheSscarletSkies/needledrop/attestations).
 
 ## Using it
 

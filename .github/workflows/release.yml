@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write      # lets the build prove which workflow made it
+  attestations: write  # publishes those proofs (build attestations)
 
 jobs:
   build:
@@ -18,10 +20,17 @@ jobs:
         include:
           - os: macos-latest
             target: --mac
+            files: |
+              release.noindex/*.dmg
+              release.noindex/*.zip
           - os: windows-latest
             target: --win
+            files: release.noindex/*.exe
           - os: ubuntu-latest
             target: --linux
+            files: |
+              release.noindex/*.AppImage
+              release.noindex/*.deb
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -35,3 +44,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # Signed proof that each download was built here, from this tag's public code.
+      # Anyone can check it with: gh attestation verify <file> --repo TheSscarletSkies/needledrop
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ matrix.files }}
