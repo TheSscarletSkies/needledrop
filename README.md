@@ -8,7 +8,7 @@ A real-time 3D turntable for your desktop. Whatever you're listening to gets pre
 
 Every part of the deck either works or is there because a real direct-drive turntable has it for a reason.
 
-- **The record is physically shaded.** An anisotropy map runs along the grooves, so light fans out radially across the vinyl the way it does on a real LP. Track gaps are glossier bands, the dead wax carries a hand-etched matrix number, the edge has a raised bead, and the paper label is matte.
+- **The record is physically shaded.** It's deep black vinyl with a soft sheen: an anisotropy map runs along the grooves, so light fans out radially across it the way it does on a real LP. Track gaps are quiet satin rings, the dead wax carries a hand-etched matrix number, the edge has a raised bead, and the paper label is matte.
 - **The album art is printed twice:** on the record label and on the jacket lying on the table beside the deck, with ring wear and an inner sleeve slipping out. Click the sleeve to change the record.
 - **The tonearm is an S-shaped arm.** It has a gimbal bearing, an offset headshell with finger lift, a cartridge and cantilever, a counterweight with a tracking-force scale, an anti-skate dial and a rubber arm rest.
   - Press play and it lifts, swings to the lead-in and lowers on a damped cue; the audio starts when the needle lands.
@@ -72,16 +72,16 @@ Only download Needledrop from this repository's [Releases page](https://github.c
 
 ### Check your download (optional)
 
-Each file on the Releases page shows its SHA-256 checksum. Compare it with yours:
+Each file on the Releases page shows its SHA-256 checksum. Compare it with yours (use the name of the file you downloaded):
 
 ```bash
-shasum -a 256 ~/Downloads/Needledrop-0.1.4-arm64.dmg      # macOS / Linux
+shasum -a 256 ~/Downloads/Needledrop-0.1.11-arm64.dmg      # macOS / Linux
 ```
 
 On Windows, run this in PowerShell:
 
 ```powershell
-Get-FileHash .\Needledrop-Setup-0.1.4-x64.exe -Algorithm SHA256
+Get-FileHash .\Needledrop-Setup-0.1.11-x64.exe -Algorithm SHA256
 ```
 
 ## Using it
