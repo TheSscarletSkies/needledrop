@@ -10,219 +10,269 @@
   <meta property="og:image" content="https://thesscarletskies.github.io/needledrop/screenshot.jpg">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#e2c6ee">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* The page is the record label: Needledrop's own lilac label, with the record pressed on it. */
     :root {
-      --bg: #17120f; --bg-2: #211a16; --line: rgba(244, 238, 230, 0.1);
-      --ink: #f4eee6; --ink-2: rgba(244, 238, 230, 0.66); --ink-3: rgba(244, 238, 230, 0.42);
-      --accent: #ff8a4c; --accent-ink: #1d120c;
+      --label: #e2c6ee;      /* the page: label paper */
+      --label-deep: #c9a5db; /* rules, pressed areas */
+      --label-pale: #efe0f5; /* raised areas */
+      --vinyl: #121012;      /* the record, buttons */
+      --ink: #2b1633;        /* text printed on the label */
+      --ink-2: #5c4466;
+      --walnut: #6b3a26;     /* the deck itself, used sparingly */
+      --display: 'Bricolage Grotesque', 'Arial Narrow', sans-serif;
+      --mono: 'DM Mono', ui-monospace, Menlo, monospace;
     }
     * { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     body {
-      margin: 0; background: var(--bg); color: var(--ink);
-      font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background-image: radial-gradient(ellipse 80% 50% at 70% 0%, rgba(255, 150, 80, 0.14), transparent 70%);
-      background-repeat: no-repeat;
+      margin: 0; background: var(--label); color: var(--ink);
+      font: 400 17px/1.55 var(--display); font-variation-settings: 'opsz' 14;
+      /* faint paper fibre */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.09 0 0 0 0 0.2 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
-    a { color: inherit; }
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+    .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-    header { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
-    .brand { display: flex; align-items: center; gap: 10px; font-family: Fraunces, Georgia, serif; font-size: 20px; text-decoration: none; }
-    .brand img { width: 26px; height: 26px; }
-    header nav a { color: var(--ink-2); text-decoration: none; font-size: 14px; margin-left: 20px; }
-    header nav a:hover { color: var(--ink); }
+    /* ---------- top ---------- */
+    .top { display: flex; justify-content: space-between; align-items: baseline; padding: 22px 0 0; }
+    .top .mono a { text-decoration: none; }
+    .top .mono a:hover { text-decoration: underline; }
 
-    .hero { text-align: center; padding: 40px 0 32px; }
-    h1 { font-family: Fraunces, Georgia, serif; font-weight: 400; font-size: clamp(38px, 7vw, 68px); line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 18px; }
-    h1 em { font-style: italic; color: #ffd2b5; }
-    .lede { color: var(--ink-2); font-size: 18px; max-width: 600px; margin: 0 auto 32px; }
-
-    .get { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 999px;
-      background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600; font-size: 17px;
-      box-shadow: 0 10px 30px -10px rgba(255, 138, 76, 0.6); transition: transform 0.15s, box-shadow 0.15s;
+    /* ---------- the record ---------- */
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; padding: 18px 0 0; }
+    .disc-wrap { position: relative; width: min(640px, 100%); aspect-ratio: 1; }
+    .disc {
+      position: absolute; inset: 0; border-radius: 50%; background: var(--vinyl);
+      box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 40px 60px -30px rgba(43, 22, 51, .55), 0 6px 14px -6px rgba(43, 22, 51, .4);
+      animation: spin 1.8s linear infinite; animation-play-state: paused;
     }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 14px 34px -10px rgba(255, 138, 76, 0.75); }
-    .btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
-    .btn small { display: block; font-weight: 500; font-size: 12.5px; opacity: 0.7; }
-    .alt { color: var(--ink-3); font-size: 14px; }
-    .alt a { color: var(--ink-2); }
-    .free { color: var(--ink-3); font-size: 13px; letter-spacing: 0.02em; }
+    /* 33⅓ rpm is one turn every 1.8 s */
+    @keyframes spin { to { transform: rotate(1turn); } }
+    .disc-wrap.playing .disc { animation-play-state: running; }
+    @media (prefers-reduced-motion: reduce) { .disc { animation: none; } }
+    .grooves {
+      position: absolute; inset: 1.5%; border-radius: 50%;
+      background:
+        repeating-radial-gradient(circle, rgba(255,255,255,0) 0 3px, rgba(255,255,255,.022) 3px 4px),
+        radial-gradient(circle, transparent 33.5%, rgba(255,255,255,.07) 34%, transparent 35%, transparent 55%, rgba(255,255,255,.06) 55.5%, transparent 56.5%, transparent 74%, rgba(255,255,255,.06) 74.5%, transparent 75.5%);
+    }
+    /* light on the record stays put while it turns */
+    .sheen {
+      position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+      background: conic-gradient(from 20deg, transparent 0 8%, rgba(255,255,255,.13) 12%, transparent 17%, transparent 50%, rgba(255,255,255,.09) 62%, transparent 67%);
+      -webkit-mask: radial-gradient(circle, transparent 31%, #000 31.5%); mask: radial-gradient(circle, transparent 31%, #000 31.5%);
+    }
+    .label {
+      position: absolute; inset: 29.5%; border-radius: 50%; background: var(--label);
+      display: grid; place-items: center; text-align: center; color: var(--ink);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25);
+    }
+    .label svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .label svg.ring text { font-family: var(--mono); font-size: 7.2px; letter-spacing: .32em; fill: var(--ink); text-transform: uppercase; }
+        .label .hole { position: absolute; left: 50%; top: 50%; width: 3.2%; aspect-ratio: 1; border-radius: 50%; background: var(--vinyl); transform: translate(-50%, -50%); }
+    h1 {
+      margin: 0; font-weight: 800; font-variation-settings: 'opsz' 96, 'wdth' 75;
+      font-size: clamp(15px, 3.6vw, 28px); line-height: .9; letter-spacing: -0.01em; text-transform: uppercase;
+      position: absolute; left: 50%; bottom: 56%; transform: translateX(-50%); width: 62%;
+    }
+    h1 span { display: block; font-family: var(--mono); font-weight: 500; font-size: .36em; letter-spacing: .2em; margin-bottom: .7em; }
+    .label .under { position: absolute; left: 50%; top: 57%; transform: translateX(-50%); font-size: clamp(6px, 1.1vw, 9px); white-space: nowrap; }
 
-    .shot { margin: 48px auto 0; max-width: 1000px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
-    .shot img { display: block; width: 100%; height: auto; }
+    /* ---------- the two sides ---------- */
+    .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: min(760px, 100%); margin: 44px auto 0; }
+    .side-card { display: grid; gap: 10px; }
+    .side-card .eyebrow { display: flex; justify-content: space-between; color: var(--ink-2); }
+    .side-card .eyebrow .yours { color: var(--ink); display: none; }
+    .side-card.mine .eyebrow .yours { display: inline; }
+    .dl {
+      display: flex; align-items: center; gap: 14px; padding: 18px 22px; border-radius: 14px;
+      background: var(--vinyl); color: var(--label-pale); text-decoration: none;
+      font-weight: 700; font-size: 20px; font-variation-settings: 'opsz' 24, 'wdth' 90;
+      transition: transform .18s ease, box-shadow .18s ease;
+      box-shadow: 0 14px 24px -16px rgba(18, 16, 18, .9);
+    }
+    .dl:hover { transform: translateY(-2px); box-shadow: 0 20px 30px -16px rgba(18, 16, 18, .9); }
+    .dl svg { width: 22px; height: 22px; fill: currentColor; flex: none; }
+    .dl .arrow { margin-left: auto; opacity: .55; font-weight: 400; }
+    .side-card .more { font-size: 14.5px; color: var(--ink-2); }
+    .side-card .more a { color: var(--ink); }
+    .bonus { text-align: center; margin: 26px 0 0; font-size: 14.5px; color: var(--ink-2); }
+    .bonus a { color: var(--ink); }
+    .promise { text-align: center; margin: 10px 0 0; color: var(--ink-2); }
 
-    section { padding: 72px 0 0; }
-    h2 { font-family: Fraunces, Georgia, serif; font-weight: 400; font-size: clamp(28px, 4vw, 36px); margin: 0 0 24px; letter-spacing: -0.01em; }
-    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .feature { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .feature h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
-    .feature p { margin: 0; color: var(--ink-2); font-size: 15px; }
+    /* ---------- back of the sleeve ---------- */
+    .back { margin-top: 110px; border-top: 1.5px solid var(--ink); }
+    .back-head { display: flex; justify-content: space-between; padding: 12px 0 0; color: var(--ink-2); }
+    h2 { margin: 56px 0 22px; font-weight: 800; font-variation-settings: 'opsz' 96, 'wdth' 75; text-transform: uppercase; font-size: clamp(34px, 6vw, 64px); line-height: .9; letter-spacing: -0.01em; }
+    .photo { margin: 0; background: var(--walnut); padding: 10px; border-radius: 6px; transform: rotate(-1.2deg); box-shadow: 0 30px 50px -30px rgba(43,22,51,.6); }
+    .photo img { display: block; width: 100%; height: auto; border-radius: 2px; }
+    .photo figcaption { color: #f3e3d8; padding: 10px 4px 2px; }
 
-    .downloads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .os { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .os.mine { border-color: rgba(255, 138, 76, 0.55); }
-    .os h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 17px; font-weight: 600; }
-    .os h3 svg { width: 18px; height: 18px; fill: currentColor; }
-    .os ul { list-style: none; margin: 0; padding: 0; }
-    .os li + li { margin-top: 8px; }
-    .os a.file { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); text-decoration: none; font-size: 14.5px; }
-    .os a.file:hover { background: rgba(255, 255, 255, 0.09); }
-    .os a.file span:last-child { color: var(--ink-3); white-space: nowrap; }
+    .tracklist { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; margin-top: 30px; }
+    .tracklist ol { list-style: none; margin: 0; padding: 0; }
+    .tracklist .side-name { padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); color: var(--ink-2); }
+    .tracklist li { display: grid; grid-template-columns: 44px 1fr; gap: 6px; padding: 16px 0; border-bottom: 1px solid var(--label-deep); }
+    .tracklist li .no { font-family: var(--mono); font-size: 13px; color: var(--ink-2); padding-top: 4px; }
+    .tracklist li b { display: block; font-weight: 700; font-size: 19px; font-variation-settings: 'opsz' 24, 'wdth' 90; }
+    .tracklist li p { margin: 2px 0 0; color: var(--ink-2); font-size: 16px; }
 
-    .steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .step { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
-    .step h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
-    .step ol, .step ul { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 15px; }
-    .step li + li { margin-top: 6px; }
-    .step b { color: var(--ink); font-weight: 600; }
-    code { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(255, 255, 255, 0.07); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+    .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; margin-top: 10px; font-size: 15.5px; }
+    .notes h3 { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1.5px solid var(--ink); }
+    .notes ol, .notes ul { margin: 0; padding-left: 18px; color: var(--ink-2); }
+    .notes li + li { margin-top: 7px; }
+    .notes p { margin: 0 0 10px; color: var(--ink-2); }
+    .notes b { color: var(--ink); font-weight: 650; }
+    code { font: 13px/1.5 var(--mono); background: var(--label-pale); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
 
-    footer { padding: 80px 0 48px; color: var(--ink-3); font-size: 14px; text-align: center; }
-    footer a { color: var(--ink-2); }
+    footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 90px; padding: 14px 0 40px; border-top: 1.5px solid var(--ink); color: var(--ink-2); }
+    footer a { text-decoration: none; } footer a:hover { text-decoration: underline; }
 
-    @media (max-width: 820px) {
-      .features, .downloads, .steps { grid-template-columns: 1fr; }
-      header nav a.hide-sm { display: none; }
-      .lede { font-size: 16.5px; }
-      section { padding-top: 56px; }
+    @media (max-width: 760px) {
+      body { font-size: 16px; }
+      .sides { grid-template-columns: 1fr; gap: 26px; margin-top: 34px; }
+      .tracklist { grid-template-columns: 1fr; gap: 30px; }
+      .notes { grid-template-columns: 1fr; gap: 30px; }
+      .back { margin-top: 80px; }
+      .hide-sm { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <a class="brand" href="./"><img src="icon.svg" alt="">Needledrop</a>
-      <nav>
-        <a class="hide-sm" href="#install">Install</a>
-        <a href="https://github.com/TheSscarletSkies/needledrop">GitHub</a>
-      </nav>
-    </header>
-
-    <div class="hero">
-      <h1>A turntable for<br><em>your desktop</em></h1>
-      <p class="lede">Whatever you're playing in Spotify, Apple Music, YouTube or your own files gets pressed onto a record. The platter spins up and the tonearm tracks across the grooves as the song plays.</p>
-
-      <div class="get">
-        <a class="btn" id="main-btn" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">
-          <svg viewBox="0 0 24 24"><path d="M11 4h2v9.17l3.59-3.58L18 11l-6 6-6-6 1.41-1.41L11 13.17zM5 19h14v2H5z"/></svg>
-          <span><span id="main-label">Download Needledrop</span><small id="main-sub">Mac, Windows and Linux</small></span>
-        </a>
-        <div class="alt" id="alt"><a href="#download">Other downloads</a></div>
-        <div class="free">Free and open source · No account · No tracking</div>
-      </div>
-
-      <div class="shot"><img src="screenshot.jpg" width="1280" height="900" alt="Needledrop: a walnut turntable with a black record, between two speakers, in golden window light"></div>
+    <div class="top">
+      <span class="mono">Needledrop</span>
+      <span class="mono"><a href="#notes" class="hide-sm">Install</a>&nbsp;&nbsp;&nbsp;<a href="https://github.com/TheSscarletSkies/needledrop">GitHub</a></span>
     </div>
 
-    <section>
-      <h2>Every part works</h2>
-      <div class="features">
-        <div class="feature"><h3>Follows your music</h3><p>Spotify and Apple Music on Mac, any player on Windows and Linux, YouTube links, and your own files and folders.</p></div>
-        <div class="feature"><h3>A real deck</h3><p>Drag the tonearm to seek, flick start/stop, switch 33/45, nudge the pitch, lift the cue lever, open the dust cover.</p></div>
-        <div class="feature"><h3>Weather at the window</h3><p>A branch swaying, rain running down the glass or snow drifting through the light, from morning to night.</p></div>
-        <div class="feature"><h3>Speakers that listen</h3><p>The woofers and tweeters move with what's actually playing.</p></div>
-        <div class="feature"><h3>Desktop widgets</h3><p>A little box with the deck from above and a player, sitting on your desktop like a macOS widget.</p></div>
-        <div class="feature"><h3>Make it yours</h3><p>Walnut, oak, black, white or blush, or any colour you like for the deck, the record and the wall.</p></div>
-      </div>
-    </section>
+    <main>
+      <div class="hero">
+        <div class="disc-wrap" id="disc" aria-hidden="false">
+          <div class="disc">
+            <div class="grooves"></div>
+            <div class="label">
+              <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+                <defs><path id="arc" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0"/></defs>
+                <text textLength="515" lengthAdjust="spacing"><textPath href="#arc" startOffset="0">Needledrop · High fidelity · Long playing · Stereo · Free · Open source · </textPath></text>
+              </svg>
+              <h1><span>Needledrop</span>A turntable for your desktop</h1>
+              <i class="hole"></i>
+              <span class="under mono" aria-hidden="true">Side A · 33⅓</span>
+            </div>
+          </div>
+          <div class="sheen"></div>
+        </div>
 
-    <section id="download">
-      <h2>Download</h2>
-      <div class="downloads">
-        <div class="os" data-os="mac">
-          <h3><svg viewBox="0 0 24 24"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.92 2.66.97.07 1.96-.49 2.56-1.21z"/></svg>Mac</h3>
-          <ul>
-            <li><a class="file" data-asset="arm64.dmg" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>Apple chip (M1 and later)</span><span>.dmg</span></a></li>
-            <li><a class="file" data-asset="intel.dmg" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>Intel</span><span>.dmg</span></a></li>
-          </ul>
+        <div class="sides">
+          <div class="side-card" data-os="mac">
+            <div class="eyebrow mono"><span>Side A</span><span class="yours">Your computer</span></div>
+            <a class="dl" data-asset="arm64.dmg" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.92 2.66.97.07 1.96-.49 2.56-1.21z"/></svg>
+              Download for Mac <span class="arrow">↓</span>
+            </a>
+            <div class="more">For Apple chips (M1 and later). <a data-asset="intel.dmg" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">Intel Mac?</a></div>
+          </div>
+          <div class="side-card" data-os="win">
+            <div class="eyebrow mono"><span>Side B</span><span class="yours">Your computer</span></div>
+            <a class="dl" data-asset="x64.exe" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 10 4.5v7H3zM11 4.35 21 3v8.5H11zM3 12.5h7v7l-7-1zM11 12.5h10V21l-10-1.4z"/></svg>
+              Download for Windows <span class="arrow">↓</span>
+            </a>
+            <div class="more">Windows 10 and 11. <a data-asset="arm64.exe" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">ARM PC?</a></div>
+          </div>
         </div>
-        <div class="os" data-os="win">
-          <h3><svg viewBox="0 0 24 24"><path d="M3 5.5 10 4.5v7H3zM11 4.35 21 3v8.5H11zM3 12.5h7v7l-7-1zM11 12.5h10V21l-10-1.4z"/></svg>Windows</h3>
-          <ul>
-            <li><a class="file" data-asset="x64.exe" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>Most PCs (Intel / AMD)</span><span>.exe</span></a></li>
-            <li><a class="file" data-asset="arm64.exe" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>ARM PCs</span><span>.exe</span></a></li>
-          </ul>
-        </div>
-        <div class="os" data-os="linux">
-          <h3><svg viewBox="0 0 24 24"><path d="M12 2c-2.2 0-3.5 1.9-3.5 4.4 0 1.4.3 2.3-.7 3.8C6.6 12 5 14 5 16.4c0 .6.1 1 .3 1.4-.7.3-1.3.9-1.3 1.6 0 1.3 2 1.6 3.3 2.1 1 .4 1.6.5 2.2-.1.5-.5 1.4-.6 2.5-.6s2 .1 2.5.6c.6.6 1.2.5 2.2.1 1.3-.5 3.3-.8 3.3-2.1 0-.7-.6-1.3-1.3-1.6.2-.4.3-.8.3-1.4 0-2.4-1.6-4.4-2.8-6.2-1-1.5-.7-2.4-.7-3.8C15.5 3.9 14.2 2 12 2z"/></svg>Linux</h3>
-          <ul>
-            <li><a class="file" data-asset=".deb" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>Ubuntu / Debian</span><span>.deb</span></a></li>
-            <li><a class="file" data-asset=".AppImage" href="https://github.com/TheSscarletSkies/needledrop/releases/latest"><span>Any distribution</span><span>.AppImage</span></a></li>
-          </ul>
-        </div>
+        <p class="bonus">Bonus track for Linux: <a data-asset=".deb" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">.deb</a> or <a data-asset=".AppImage" href="https://github.com/TheSscarletSkies/needledrop/releases/latest">AppImage</a></p>
+        <p class="promise mono" id="version">Free · Open source · No account · No tracking</p>
       </div>
-      <p class="alt" style="margin-top:16px" id="version-note">All files are on the <a href="https://github.com/TheSscarletSkies/needledrop/releases/latest">GitHub releases page</a>.</p>
-    </section>
 
-    <section id="install">
-      <h2>Installing</h2>
-      <div class="steps">
-        <div class="step">
-          <h3>Mac</h3>
+      <section class="back" aria-labelledby="tracks">
+        <div class="back-head mono"><span>The back of the sleeve</span><span class="hide-sm">Pressed in three.js</span></div>
+        <h2 id="tracks">Tracklist</h2>
+        <figure class="photo">
+          <img src="screenshot.jpg" width="1280" height="900" alt="Needledrop on screen: a walnut turntable with a black record, between two speakers, in golden window light" loading="lazy">
+          <figcaption class="mono">Golden hour, nothing on the platter yet</figcaption>
+        </figure>
+        <div class="tracklist">
           <ol>
-            <li>Open the <b>.dmg</b> and drag Needledrop into <b>Applications</b>.</li>
-            <li>Open it. macOS says it can't verify the developer: click <b>Done</b>.</li>
-            <li>Go to <b>System Settings → Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>. You only do this once.</li>
-            <li>When asked whether Needledrop may control Spotify or Music, click <b>Allow</b> so the record follows your music.</li>
+            <li class="side-name mono" style="display:block">Side A</li>
+            <li><span class="no">A1</span><div><b>It follows your music</b><p>Spotify and Apple Music on Mac, any player on Windows and Linux, YouTube links, and your own files and folders.</p></div></li>
+            <li><span class="no">A2</span><div><b>Every part works</b><p>Drag the tonearm to skip through a song, flick start/stop, switch 33/45, nudge the pitch, open the dust cover.</p></div></li>
+            <li><span class="no">A3</span><div><b>Speakers that listen</b><p>The woofers and tweeters move with what's actually playing.</p></div></li>
+          </ol>
+          <ol>
+            <li class="side-name mono" style="display:block">Side B</li>
+            <li><span class="no">B1</span><div><b>Weather at the window</b><p>A branch swaying, rain running down the glass or snow in the light, from morning to night.</p></div></li>
+            <li><span class="no">B2</span><div><b>A widget for your desktop</b><p>A little box with the deck from above and a player underneath.</p></div></li>
+            <li><span class="no">B3</span><div><b>Your colours</b><p>Walnut, oak, black, white or blush, or any colour you like for the deck, the record and the wall.</p></div></li>
           </ol>
         </div>
-        <div class="step">
-          <h3>Windows</h3>
-          <ol>
-            <li>Run the <b>.exe</b> installer.</li>
-            <li>If SmartScreen says <i>Windows protected your PC</i>, click <b>More info → Run anyway</b>.</li>
-          </ol>
-          <h3 style="margin-top:18px">Linux</h3>
-          <ul>
-            <li><code>sudo apt install ./needledrop_*_amd64.deb</code></li>
-            <li>Or make the AppImage executable and open it. Install <code>playerctl</code> to follow your music player.</li>
-          </ul>
-        </div>
-        <div class="step">
-          <h3>Why the warning?</h3>
-          <p style="margin:0;color:var(--ink-2);font-size:15px">Needledrop is a free project, and isn't signed with a paid Apple or Microsoft certificate yet. Your computer shows this warning for every app like that; it doesn't mean anything harmful was found.</p>
-        </div>
-        <div class="step">
-          <h3>Is it safe?</h3>
-          <ul>
-            <li>All the code is <a href="https://github.com/TheSscarletSkies/needledrop">public</a>, and every download is built by GitHub from that code.</li>
-            <li>Each file has a <a href="https://github.com/TheSscarletSkies/needledrop#check-your-download-optional">build attestation</a> you can check, proving where it came from.</li>
-            <li>No account, no analytics, and no microphone, camera or screen access.</li>
-          </ul>
-        </div>
-      </div>
-    </section>
 
-    <footer>
-      Made by <a href="https://github.com/TheSscarletSkies">Mariyam Ahmed</a> · <a href="https://github.com/TheSscarletSkies/needledrop">Source on GitHub</a> · MIT licence
+        <h2 id="notes">Liner notes</h2>
+        <div class="notes">
+          <div>
+            <h3 class="mono">Installing on a Mac</h3>
+            <ol>
+              <li>Open the <b>.dmg</b> and drag Needledrop into <b>Applications</b>.</li>
+              <li>Open it. When macOS says it can't verify the developer, click <b>Done</b>.</li>
+              <li>In <b>System Settings → Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>. You only do this once.</li>
+              <li>When asked if Needledrop may control Spotify or Music, click <b>Allow</b>.</li>
+            </ol>
+          </div>
+          <div>
+            <h3 class="mono">Installing on Windows</h3>
+            <ol>
+              <li>Run the <b>.exe</b> installer.</li>
+              <li>If you see <b>Windows protected your PC</b>, click <b>More info → Run anyway</b>.</li>
+            </ol>
+            <h3 class="mono" style="margin-top:26px">On Linux</h3>
+            <p><code>sudo apt install ./needledrop_*_amd64.deb</code><br>or make the AppImage executable and open it. Install <code>playerctl</code> so the record follows your player.</p>
+          </div>
+          <div>
+            <h3 class="mono">About that warning</h3>
+            <p>Needledrop is a free project and isn't signed with a paid Apple or Microsoft certificate yet. Your computer warns about every app like that; it doesn't mean anything harmful was found.</p>
+            <ul>
+              <li>All the code is <a href="https://github.com/TheSscarletSkies/needledrop">public</a>, and GitHub builds every download from it.</li>
+              <li>You can <a href="https://github.com/TheSscarletSkies/needledrop#check-your-download-optional">check where your file came from</a>.</li>
+              <li>No account, no analytics, no microphone or camera.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mono">
+      <span id="catalog">Needledrop · MIT licence</span>
+      <span>Made by <a href="https://github.com/TheSscarletSkies">Mariyam Ahmed</a></span>
     </footer>
   </div>
 
   <script>
-    // Point each button at the real file in the latest release, and make the big button
-    // download the right one for this computer. Without the GitHub API (offline, rate-limited)
-    // every link still goes to the releases page.
     (function () {
       var REPO = 'TheSscarletSkies/needledrop';
+
+      // Mark the visitor's own computer.
       var ua = navigator.userAgent;
-      var os = /Mac/.test(ua) && !/iPhone|iPad/.test(ua) && !('ontouchend' in document) ? 'mac'
-        : /Windows/.test(ua) ? 'win'
-        : /Linux/.test(ua) && !/Android/.test(ua) ? 'linux' : null;
-      var arm = false; // Windows on ARM
+      var os = /Windows/.test(ua) ? 'win'
+        : /Mac/.test(ua) && !('ontouchend' in document) ? 'mac' : null;
+      if (os) document.querySelector('.side-card[data-os="' + os + '"]').classList.add('mine');
 
-      var labels = {
-        mac: ['Download for Mac', 'Apple chip (M1 and later)', 'arm64.dmg', '<a href="#download" data-pick="intel.dmg">Intel Mac?</a> · <a href="#download">Other downloads</a>'],
-        win: ['Download for Windows', 'Windows 10 and 11', 'x64.exe', '<a href="#download">ARM PC or other downloads</a>'],
-        linux: ['Download for Linux', 'Ubuntu / Debian (.deb)', '.deb', '<a href="#download" data-pick=".AppImage">AppImage</a> · <a href="#download">Other downloads</a>']
-      };
+      // Pointing at a download spins the record up to 33⅓, like pressing start.
+      var disc = document.getElementById('disc');
+      document.querySelectorAll('.dl').forEach(function (b) {
+        ['mouseenter', 'focus'].forEach(function (e) { b.addEventListener(e, function () { disc.classList.add('playing'); }); });
+        ['mouseleave', 'blur'].forEach(function (e) { b.addEventListener(e, function () { disc.classList.remove('playing'); }); });
+      });
 
+      // Point each link at the real file in the latest release. Without the GitHub API
+      // (offline, rate-limited), every link still goes to the releases page.
       function pick(assets, key) {
         return assets.find(function (a) {
           var n = a.name;
@@ -234,45 +284,20 @@
           return n.endsWith(key);
         });
       }
-
-      var main = document.getElementById('main-btn');
-      if (os) {
-        var l = labels[os];
-        document.getElementById('main-label').textContent = l[0];
-        document.getElementById('main-sub').textContent = l[1];
-        main.dataset.asset = l[2];
-        document.getElementById('alt').innerHTML = l[3];
-        var card = document.querySelector('.os[data-os="' + os + '"]');
-        if (card) card.classList.add('mine');
-      }
-
-      function size(b) { return (b / 1048576).toFixed(0) + ' MB'; }
-
       fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
         .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
         .then(function (rel) {
-          var assets = rel.assets || [];
           document.querySelectorAll('[data-asset]').forEach(function (el) {
-            var a = pick(assets, el.dataset.asset);
-            if (!a) return;
-            el.href = a.browser_download_url;
-            if (el.classList.contains('file')) el.querySelector('span:last-child').textContent = size(a.size);
+            var a = pick(rel.assets || [], el.dataset.asset);
+            if (a) el.href = a.browser_download_url;
           });
-          if (os) {
-            var a = pick(assets, main.dataset.asset);
-            if (a) document.getElementById('main-sub').textContent += ' · ' + rel.tag_name.replace(/^v/, 'Version ');
-          }
-          document.getElementById('alt').addEventListener('click', function (e) {
-            var k = e.target.dataset && e.target.dataset.pick;
-            if (!k) return;
-            var a = pick(assets, k);
-            if (a) { e.preventDefault(); location.href = a.browser_download_url; }
-          });
-          document.getElementById('version-note').innerHTML = 'Version ' + rel.tag_name.replace(/^v/, '') +
-            ' · <a href="' + rel.html_url + '">Release notes and all files</a>';
+          var v = rel.tag_name.replace(/^v/, '');
+          document.getElementById('version').innerHTML = 'Version ' + v + ' · Free · Open source · No account · No tracking';
+          // Catalogue number from the version, like the spine of a sleeve: 0.1.12 → ND-0112
+          var n = v.split('.'), cat = 'ND-' + n[0] + n[1] + ('0' + n[2]).slice(-2);
+          document.getElementById('catalog').innerHTML = cat + ' · <a href="' + rel.html_url + '">Release notes</a> · MIT licence';
         })
         .catch(function () {});
-
     })();
   </script>
 </body>
