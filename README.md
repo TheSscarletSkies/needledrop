@@ -51,7 +51,9 @@ Every part of the deck either works or is there because a real direct-drive turn
 
 ## Install
 
-Only download Needledrop from this repository's [Releases page](https://github.com/TheSscarletSkies/needledrop/releases/latest). Copies hosted anywhere else aren't ours.
+**[Download Needledrop →](https://thesscarletskies.github.io/needledrop/)** The download page picks the right file for your computer.
+
+Only download Needledrop from that page or this repository's [Releases page](https://github.com/TheSscarletSkies/needledrop/releases/latest). Copies hosted anywhere else aren't ours.
 
 ### Why your computer warns you, and why it's safe to continue
 
